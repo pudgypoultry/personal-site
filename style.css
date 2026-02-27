@@ -93,7 +93,7 @@ blockquote p:last-child {
 /* Full size background image */
 html, #container, .inner { background-color:transparent;}
 html {
-  background:url(background.png) bottom right no-repeat fixed;
+  background: #000000 url(background.png) bottom right no-repeat fixed;
   background-size:auto;
 }
 body {
