@@ -90,11 +90,27 @@ blockquote p:last-child {
  * Layout styles
  */
 
-/* Full size background image */
-html, #container, .inner { background-color:transparent;}
+/* The background is no longer an image: #life-bg is a canvas running a very slow
+   game of Life behind everything. Plain black underneath it. */
+#container, .inner { background-color:transparent;}
 html {
-  background: #000000 url(background.png) bottom left no-repeat fixed;
-  background-size:auto;
+  background-color: #000000;
+}
+
+#life-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;          /* behind the content, above the page's black backdrop */
+  display: block;
+  pointer-events: none; /* the cursor seeds it, but it must never eat a click */
+}
+/* A background that changes on its own is exactly what reduced motion is for.
+   script.js also bails out early, so the simulation never even starts. */
+@media (prefers-reduced-motion: reduce) {
+  #life-bg { display: none; }
 }
 body {
   max-width:800px;
@@ -132,12 +148,468 @@ ul.main-menu li a.active {
   border-bottom-color:#EF6D3D;
 }
 
+/**
+ * Landing page
+ *
+ * The name is the page's only h1 and lives in the header, so it is present whichever
+ * tab is open. Below it the region is a short lede, the degrees as chips, and then
+ * panels -- teaching, toolkit, a preview of the project grid -- rather than one long
+ * paragraph with rows of unlabelled logos.
+ */
+.header__id {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.header__id img {
+  flex: none;
+}
+#header h1 {
+  margin: 0 0 6px 0;
+  font-size: 3.2rem;
+  letter-spacing: -.05rem;
+}
+.tagline {
+  margin: 0;
+  max-width: 34em;
+  font-size: 1.5rem;
+  line-height: 1.45;
+  color: #9aa0ab;
+}
+
+.lede {
+  max-width: 40em;
+  margin: 0 0 1.1em 0;
+  font-size: 1.7rem;
+  line-height: 1.55;
+  color: #e8e9ec;
+}
+/* The aside that points at the tab transition: quieter, and marked as a remark */
+.lede--aside {
+  margin-bottom: 1.8em;
+  padding-left: 13px;
+  border-left: 2px solid rgba(239,109,61,.5);
+  font-size: 1.4rem;
+  color: #9aa0ab;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 2.2em 0;
+  padding: 0;
+  list-style: none;
+}
+.chip {
+  padding: 2px 9px;
+  background-color: rgba(239,109,61,.13);
+  border: 1px solid rgba(239,109,61,.45);
+  color: #EF6D3D;
+  font-size: 1.2rem;
+  letter-spacing: .03rem;
+}
+
+.panel {
+  margin: 0 0 2.2em 0;
+}
+.panel > h2 {
+  margin: 0 0 6px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(239,109,61,.3);
+  font-size: 1.9rem;
+  letter-spacing: 0;
+  color: #FFFFFF;
+}
+.panel__meta {
+  margin: 0 0 .9em 0;
+  font-size: 1.3rem;
+  color: #9aa0ab;
+}
+
+.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.plain-list li {
+  margin-bottom: .35em;
+  font-size: 1.45rem;
+  line-height: 1.45;
+}
+.plain-list b {
+  font-weight: 400;
+  color: #FFFFFF;
+}
+
+/* Labelled toolkit. The icons used to be bare 100px logos in a row, which told a
+   visitor nothing unless they already recognised every mark. */
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  margin: 0 0 1.6em 0;
+  padding: 0;
+  list-style: none;
+}
+.tool-grid li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 5px 9px 5px;
+  background-color: rgba(0,0,0,.45);
+  border: 1px solid rgba(239,109,61,.18);
+}
+.tool-grid img {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;   /* the logos are not all the same aspect */
+}
+.tool-grid span {
+  font-size: 1.2rem;
+  color: #9aa0ab;
+}
+
+.more-link {
+  margin: 12px 0 0 0;
+  font-size: 1.4rem;
+}
+
+/* Contact, which used to be a tab of its own. Each entry names the platform and
+   the handle, so the links say where they go before you hover them. */
+.contact-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.contact-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  height: 100%;
+  background-color: rgba(0,0,0,.45);
+  border: 1px solid rgba(239,109,61,.22);
+  color: #cfd2da;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.contact-list a:hover,
+.contact-list a:focus {
+  border-color: #EF6D3D;
+  background-color: rgba(0,0,0,.25);
+}
+.contact-list b {
+  font-weight: 400;
+  font-size: 1.4rem;
+  color: #EF6D3D;
+}
+.contact-list span {
+  font-size: 1.25rem;
+  color: #9aa0ab;
+  word-break: break-word;
+}
+
+/**
+ * Thoughts
+ *
+ * Structure only for now: entries are <article class="note"> blocks, newest first.
+ * The styles are here so that dropping one in needs no further CSS work.
+ */
+.notes {
+  max-width: 40em;
+}
+.note {
+  margin: 0 0 2.4em 0;
+  padding-bottom: 2.4em;
+  border-bottom: 1px solid rgba(239,109,61,.2);
+}
+.note:last-child {
+  border-bottom: 0;
+}
+.note__title {
+  margin: 0 0 4px 0;
+  font-size: 2.2rem;
+  letter-spacing: -.03rem;
+  color: #FFFFFF;
+}
+.note__meta {
+  margin: 0 0 1.1em 0;
+  font-size: 1.25rem;
+  letter-spacing: .04rem;
+  text-transform: uppercase;
+  color: #9aa0ab;
+}
+.note p {
+  margin: 0 0 1em 0;
+  font-size: 1.55rem;
+  line-height: 1.65;
+}
+.notes__empty {
+  font-size: 1.45rem;
+  color: #9aa0ab;
+}
+
+/**
+ * Projects: bento grid
+ *
+ * Cells of mixed span rather than a top-to-bottom list. The two wide cells are the
+ * ones whose art earns the room -- the 16:9 mod screenshot and the last jam entry --
+ * and the rest sit as equal cells, so the board reads as a grid mid-simulation
+ * rather than a tidy table. Categories moved from headings onto per-cell tags,
+ * which is what allows projects of different kinds to share one grid.
+ */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0 0 2em 0;
+}
+
+.project {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  overflow: hidden;
+  background-color: rgba(0,0,0,.55);
+  border: 1px solid rgba(239,109,61,.28);
+  color: #cfd2da;
+  text-decoration: none;
+  transition: border-color .2s ease, transform .2s ease, background-color .2s ease;
+}
+.project:hover,
+.project:focus {
+  border-color: #EF6D3D;
+  background-color: rgba(0,0,0,.35);
+  transform: translateY(-2px);
+}
+
+/* The headline cell runs the full width of the grid and gets a hero-sized image. */
+.project--hero {
+  grid-column: span 3;
+}
+.project--hero .project__media {
+  aspect-ratio: 3 / 2;
+}
+.project--hero .project__title {
+  font-size: 2rem;
+}
+
+/* The Sand screenshot is nearly square, so any cell it lands in crops it. Bias the
+   crop downward: it is the empty sky above the cloud that can be spared, not the
+   island. Shared by the hero cell and the smaller one on the landing page. */
+.project--sand .project__media,
+.project--hero .project__media {
+  object-position: center 60%;
+}
+
+/* Two cells take a double-width slot: the mod, whose 16:9 screenshot is wide enough
+   to fill it at full resolution, and the itch.io link, which has no artwork to
+   stretch. The jam screenshots are only 315px wide, so they stay single-width
+   rather than being blown up past their native size. */
+.project--wide {
+  grid-column: span 2;
+}
+
+.project__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 315 / 250;   /* the three jam shots are all exactly this */
+  object-fit: cover;
+  margin: 0;
+}
+.project--wide .project__media,
+.project--cinema .project__media {
+  /* Keep the mod's 16:9 screenshot at its own shape. In a single-width cell the
+     default 315/250 box would crop away about 40% of its width. */
+  aspect-ratio: 16 / 9;
+}
+
+.project__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px 11px 11px;
+  margin-top: auto;          /* text sits at the bottom of the cell */
+}
+.project__title {
+  color: #FFFFFF;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+.project__meta {
+  font-size: 1.2rem;
+  line-height: 1.35;
+  color: #9aa0ab;
+}
+.project:hover .project__meta,
+.project:focus .project__meta {
+  color: #cfd2da;
+}
+
+.project__tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  padding: 1px 7px;
+  background-color: #EF6D3D;
+  color: #14100e;
+  font-size: 1.1rem;
+  letter-spacing: .05rem;
+  text-transform: uppercase;
+}
+
+/* Cells with no screenshot show a still frame of the transition automaton instead.
+   It costs nothing extra: wipe-frames.png is already loaded and decoded for the tab
+   transition, and this just parks on a covered frame of it. */
+.project--pattern {
+  background-image: url(wipe-frames.png);
+  background-size: 3200px 64000px;   /* same 10x blow-up the transition uses */
+  background-position: -980px -32460px;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+.project--pattern-b {
+  background-position: -1740px -33020px;  /* a different corner of the board */
+}
+.project--pattern .project__body {
+  background-color: rgba(0,0,0,.78);
+}
+
+.project--cta {
+  justify-content: center;
+  border-style: dashed;
+}
+.project--cta .project__body {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .project-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* span 3 in a two-column grid would grow a phantom third column */
+  .project--hero {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 480px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+  .project--hero,
+  .project--wide {
+    grid-column: span 1;
+  }
+  .project--wide .project__media {
+    aspect-ratio: 315 / 250;
+  }
+}
+
 /* Utility classes */
 .hide {
   display:none;
 }
 .show {
   display:block;
+}
+
+/**
+ * Tab transition: a pre-rendered cellular automaton, played back as film
+ *
+ * The rules -- threshold-CA growth, Conway's Life ticking underneath, threshold-CA
+ * decay -- are not run in the browser. tools/make-wipe-frames.py runs them once,
+ * offline, and bakes the result into wipe-frames.png: a vertical strip of frames,
+ * one *pixel* per cell. Blown up with image-rendering: pixelated, one source pixel
+ * becomes one crisp 10px cell, which is how a ten-thousand-cell board is possible
+ * at all -- as DOM elements it was capped around a hundred.
+ *
+ * Playback is a single element with a single animation. background-position steps
+ * down the strip one frame at a time; steps() is what makes it a flipbook rather
+ * than a smooth scroll, so each generation snaps into place. There is no per-cell
+ * anything at runtime: the browser is compositing one background.
+ *
+ * script.js only measures. It positions the strip so the seed cell -- baked at the
+ * centre of the sheet -- lands under the cursor, clamped so the sheet always covers
+ * the viewport, and hands the numbers over as custom properties. The step count in
+ * the animation below must match SHEET_FRAMES in script.js and FRAMES in the
+ * generator; everything else is derived at runtime.
+ */
+#wipe-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none; /* never blocks clicks on the page underneath */
+  display: none;        /* only rendered while a transition is running */
+
+  background-image: url(wipe-frames.png);
+  background-repeat: no-repeat;
+  background-size: var(--sheet-w, 3200px) var(--sheet-h, 64000px);
+  background-position: var(--ox, 0px) var(--oy, 0px);
+  /* One source pixel per cell, so it must not be smoothed on the way up.
+     crisp-edges first as the fallback; pixelated wins where both are supported. */
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+#wipe-overlay.wipe-active {
+  display: block;
+  animation: wipe-play var(--play-ms, 640ms) steps(32) forwards;
+}
+
+/* Walk the strip: each step lands exactly on the next frame. */
+@keyframes wipe-play {
+  from { background-position: var(--ox, 0px) var(--oy, 0px); }
+  to   { background-position: var(--ox, 0px) calc(var(--oy, 0px) - var(--sheet-h, 64000px)); }
+}
+
+/* The incoming tab just fades. It used to scale up slightly as well, but this
+   region is tall and full of large screenshots, and scaling it forces the browser
+   to re-rasterise all of that while the tiles are still falling. */
+.content-region.wipe-in {
+  animation: content-settle .5s ease-out both;
+}
+
+@keyframes content-settle {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Small touch so the menu itself doesn't feel static */
+ul.main-menu li a {
+  transition: color .25s ease, border-bottom-color .25s ease;
+}
+
+/* Respect users who ask the OS to reduce motion. They still get a transition,
+   just a calm one: the automaton is dropped entirely and the incoming tab fades in.
+   Opacity only -- no movement, which is the part that causes trouble for people
+   sensitive to motion. script.js skips the playback to match. */
+@media (prefers-reduced-motion: reduce) {
+  /* keep the sheet off screen entirely rather than flashing a frame of it */
+  #wipe-overlay,
+  #wipe-overlay.wipe-active {
+    display: none;
+    animation: none;
+  }
+  .content-region.wipe-in {
+    animation: content-fade .3s ease-out both;
+  }
+}
+
+@keyframes content-fade {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 

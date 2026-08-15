@@ -27,16 +27,29 @@
   
   <body>
 
+    <!-- Living background: a very slow game of Life you seed by moving the cursor.
+         Decorative only, so it is hidden from assistive tech. See script.js. -->
+    <canvas id="life-bg" aria-hidden="true"></canvas>
+
+    <!-- Playback surface for the tab transition. The automata are pre-rendered into
+         wipe-frames.png by tools/make-wipe-frames.py; style.css flips through it. -->
+    <div id="wipe-overlay"></div>
+
     <header id="header">
-      <img src="logo.png" width="150" height="150">
-      <h1></h1>
-      
+      <div class="header__id">
+        <img src="logo.png" width="150" height="150" alt="">
+        <div class="header__text">
+          <h1>Andrew Teske</h1>
+          <p class="tagline">Software Dev. Games. Simulations. Systems. Optimization.</p>
+        </div>
+      </div>
+
       <!-- Menu link fragment #id should match a div id. Example: <a href="#home"> links to <div id="home"></div>  -->
       <ul class="main-menu">
         <li><a href="#home">Howdy</a></li>
         <li><a href="#about">Projects</a></li>
-        <li><a href="#contact">Find Me</a></li>
-      </ul>                 
+        <li><a href="#thoughts">Thoughts</a></li>
+      </ul>
     </header>
    
     <div id="container">
@@ -44,59 +57,220 @@
         <div id="content"> 
           
           <div id="home" class="content-region hide">
-            <h2>I'm Andrew Teske</h2>
-            <p>
-              Computer Science MS. Economics MS. Indie game dev. <br>
-              My favorite games are generally puzzle heavy, strategy oriented, and complex either through time pressure or systemic size.
-              <br>
-              <br>
-              -Most Used Languages-<br>
-              <img src="c.png" width="100" height="100"><img src="csharp.png" width="100" height="100"><img src="python.png" width="100" height="100"><img src="java.png" width="100" height="100">
-              <br>
-              <br>
-              -Most Used Platforms-<br>
-              <img src="godot.png" width="100" height="100"><img src="krita.png" width="100" height="100"><img src="unity.png" width="100" height="100"><img src="photoshop.png" width="100" height="100"><img src="blender.png" width="100" height="100">
+            <p class="lede lede--aside">
+              All the world's a game.
             </p>
+            <p class="lede">
+              I build interactive systems and tools in Godot, Unity, and whatever I feel like. 
+              I taught CS labs at University of Oregon for Game Development and Computer 
+              Organization during my CS Master's. My background is in data and systems
+              (MS Economics, BS Mathematics), and I love working with cellular automata 
+              and simulations.
+            </p>
+
+
+
+            <ul class="chips">
+              <li class="chip">MS Computer Science &rsquo;26</li>
+              <li class="chip">MS Economics &rsquo;19</li>
+              <li class="chip">BS Mathematics &rsquo;14</li>
+            </ul>
+
+            <section class="panel">
+              <!-- <h2>Teaching</h2>
+              <p class="panel__meta">University of Oregon, Computer Science &middot; 2022&ndash;2025</p>
+              <ul class="plain-list">
+                <li><b>Graduate Educator</b> &mdash; Computer Organization, Game Development</li>
+                <li><b>Undergraduate TA</b> &mdash; HTML &amp; CSS, CS1, CS2, CS3</li>
+              </ul> -->
+            </section>
+
+            <section class="panel">
+              <h2>Preferred Tools</h2>
+
+              <p class="panel__meta">Languages</p>
+              <ul class="tool-grid">
+                <li><img src="c.png" alt=""><span>C</span></li>
+                <li><img src="cpp.png" alt=""><span>C++</span></li>
+                <li><img src="csharp.png" alt=""><span>C#</span></li>
+                <li><img src="python.png" alt=""><span>Python</span></li>
+                <li><img src="java.png" alt=""><span>Java</span></li>
+              </ul>
+
+              <p class="panel__meta">Programs</p>
+              <ul class="tool-grid">
+                <li><img src="godot.png" alt=""><span>Godot</span></li>
+                <li><img src="unity.png" alt=""><span>Unity</span></li>
+                <li><img src="krita.png" alt=""><span>Krita</span></li>
+                <li><img src="photoshop.png" alt=""><span>Photoshop</span></li>
+                <li><img src="blender.png" alt=""><span>Blender</span></li>
+              </ul>
+            </section>
+
+            <section class="panel">
+              <h2>Selected work</h2>
+
+              <!-- Same cells as the Projects tab, three across. Sand first to match
+                   the headline slot on the Projects tab. -->
+              <div class="project-grid">
+                <a class="project project--sand" href="https://pudgypoultry.github.io/Sand">
+                  <span class="project__tag">Sim</span>
+                  <img class="project__media" src="sand.png" alt="Sand: a voxel island with water, vegetation and a cloud above it, inside a wireframe simulation volume">
+                  <span class="project__body">
+                    <span class="project__title">Sand</span>
+                    <span class="project__meta">Every voxel simulated on the GPU &middot; needs WebGPU</span>
+                  </span>
+                </a>
+
+                <a class="project project--cinema" href="https://steamcommunity.com/sharedfiles/filedetails/?id=2420293022">
+                  <span class="project__tag">Mod</span>
+                  <img class="project__media" src="paladin-mod.png" alt="Paladin character mod for Slay the Spire">
+                  <span class="project__body">
+                    <span class="project__title">The Paladin</span>
+                    <span class="project__meta">Slay the Spire character mod &middot; 60+ cards &middot; ~9200 players</span>
+                  </span>
+                </a>
+
+                <a class="project" href="https://axiomata.itch.io/panopticon">
+                  <span class="project__tag">Jam</span>
+                  <img class="project__media" src="panopticon.png" alt="PANOPTICON screenshot">
+                  <span class="project__body">
+                    <span class="project__title">PANOPTICON</span>
+                    <span class="project__meta">GMTK 2025 &middot; 7 days</span>
+                  </span>
+                </a>
+              </div>
+
+              <p class="more-link"><a href="#about">All projects &rarr;</a></p>
+            </section>
+
+            <section class="panel">
+              <h2>Find me</h2>
+              <ul class="contact-list">
+                <li>
+                  <a href="mailto:ateske@uoregon.edu">
+                    <b>Email</b><span>ateske@uoregon.edu</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/pudgypoultry">
+                    <b>GitHub</b><span>pudgypoultry</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://axiomata.itch.io">
+                    <b>itch.io</b><span>axiomata</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://www.linkedin.com/in/andrew-teske-665274389/">
+                    <b>LinkedIn</b><span>Andrew Teske</span>
+                  </a>
+                </li>
+              </ul>
+            </section>
+
           </div>
           
           <div id="about" class="content-region hide">
-            <h2>Tools</h2>
-            <p style="text-align: center;">
-              <a href="https://godotengine.org/asset-library/asset/4802"><b>Card Game Skeleton</b><br> Godot addon meant to assist with the backend management of digital card games</a><br>
-            </p>
-            <p style="text-align: center;">
-              <a href="https://axiomata.itch.io/float-conversion-teacher"><b>Float Conversion Teacher</b><br> A simple app made in Godot to assist with students learning how to convert from integer to float representation and back</a><br>
-            </p>
-            <h2>Mods</h2>
-            <p style="text-align: center;">
-              <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2420293022"><b>Paladin Character Mod - Slay the Spire</b><br>Adding Tirion Fordring from WoW to Slay the Spire by translating the mechanics of paladin characters into a deckbuilding card game. ~9200 players!</a><br>
-              <img src="paladin-mod.png" width ="500"></a>
-            </p>
-              <h2>Game Jam Projects</h2>
-            <p style="text-align: center;">
-              <a href="https://axiomata.itch.io/one-armed-bandit"><b>One-Armed Bandit</b> - Made in 4 days for Brackeys Game Jam Summer 2025<br>
-              <img src="one-armed-bandit.png"></a> 
-            </p>
-            <p style="text-align: center;">
-              <a href="https://axiomata.itch.io/panopticon"><b>PANOPTICON</b> - Made in 7 days for GMTK Game Jam 2025<br>
-              <img src="panopticon.png"></a>
-            </p>
-            <p style="text-align: center;">
-              <a href="https://axiomata.itch.io/barios-life-threatening-journey"><b>Bario's Life-Threatening Journey</b> - Made in 3 days for Mini Jame Gam #14<br>
-              <img src="bario.png"></a>
-            </p>
+            <h2>Projects</h2>
+
+            <!-- Bento grid: cells of mixed span, like a board mid-simulation.
+                 The category that used to be a heading is now a tag on each cell,
+                 which is what lets the projects mix in one grid. Cells without a
+                 screenshot borrow a still frame of the transition automaton. -->
+            <div class="project-grid">
+
+              <a class="project project--hero" href="https://pudgypoultry.github.io/Sand">
+                <span class="project__tag">Sim</span>
+                <img class="project__media" src="sand.png" alt="Sand: a voxel island with water, vegetation and a cloud above it, inside a wireframe simulation volume">
+                <span class="project__body">
+                  <span class="project__title">Sand</span>
+                  <span class="project__meta">Every voxel simulated on the GPU in a compute shader &middot; needs WebGPU</span>
+                </span>
+              </a>
+
+              <a class="project project--wide" href="https://steamcommunity.com/sharedfiles/filedetails/?id=2420293022">
+                <span class="project__tag">Mod</span>
+                <img class="project__media" src="paladin-mod.png" alt="Paladin character mod for Slay the Spire">
+                <span class="project__body">
+                  <span class="project__title">Paladin Character Mod &mdash; Slay the Spire</span>
+                  <span class="project__meta">Tirion Fordring translated into a deckbuilder. ~9200 players</span>
+                </span>
+              </a>
+
+              <a class="project project--pattern" href="https://godotengine.org/asset-library/asset/4802">
+                <span class="project__tag">Tool</span>
+                <span class="project__body">
+                  <span class="project__title">Card Game Skeleton</span>
+                  <span class="project__meta">Godot addon for the backend of digital card games</span>
+                </span>
+              </a>
+
+              <a class="project" href="https://axiomata.itch.io/one-armed-bandit">
+                <span class="project__tag">Jam</span>
+                <img class="project__media" src="one-armed-bandit.png" alt="One-Armed Bandit screenshot">
+                <span class="project__body">
+                  <span class="project__title">One-Armed Bandit</span>
+                  <span class="project__meta">Brackeys Summer 2025 &middot; 4 days</span>
+                </span>
+              </a>
+
+              <a class="project" href="https://axiomata.itch.io/panopticon">
+                <span class="project__tag">Jam</span>
+                <img class="project__media" src="panopticon.png" alt="PANOPTICON screenshot">
+                <span class="project__body">
+                  <span class="project__title">PANOPTICON</span>
+                  <span class="project__meta">GMTK 2025 &middot; 7 days</span>
+                </span>
+              </a>
+
+              <a class="project" href="https://axiomata.itch.io/barios-life-threatening-journey">
+                <span class="project__tag">Jam</span>
+                <img class="project__media" src="bario.png" alt="Bario's Life-Threatening Journey screenshot">
+                <span class="project__body">
+                  <span class="project__title">Bario's Life-Threatening Journey</span>
+                  <span class="project__meta">Mini Jame Gam #14 &middot; 3 days</span>
+                </span>
+              </a>
+
+              <a class="project project--pattern project--pattern-b" href="https://axiomata.itch.io/float-conversion-teacher">
+                <span class="project__tag">Tool</span>
+                <span class="project__body">
+                  <span class="project__title">Float Conversion Teacher</span>
+                  <span class="project__meta">Godot app for learning integer&ndash;float conversion</span>
+                </span>
+              </a>
+
+              <!-- Wide, because it is the one cell with no artwork to stretch -->
+              <a class="project project--cta project--wide" href="https://axiomata.itch.io">
+                <span class="project__body">
+                  <span class="project__title">More on itch.io</span>
+                  <span class="project__meta">Everything else I have put out</span>
+                </span>
+              </a>
+
+            </div>
           </div>
-          
-          <div id="contact" class="content-region hide">
-            <h2>Find Me</h2>
-            <p>
-              <b>Email</b> - ateske@uoregon.edu<br>
-              <a href="https://github.com/pudgypoultry"><b>Github</b></a><br>
-              <a href="https://axiomata.itch.io"><b>itch.io</b></a><br>
-              <a href="https://www.linkedin.com/in/andrew-teske-665274389/"><b>LinkedIn</b></a><br>
+
+          <div id="thoughts" class="content-region hide">
+            <h2>Thoughts</h2>
+            <p class="lede lede--aside">
+              Workin' on this. Will post my thoughts that don't fit in 300 characters here.
             </p>
+
+            <!-- Entries are individual files in thoughts/, listed once in
+                 thoughts/index.json. The block at the bottom of script.js reads
+                 the manifest, sorts by date, and renders every fragment into the
+                 container below. To add a new piece: write a body-only fragment
+                 (paragraphs, no wrapper) at thoughts/<slug>.html, then add one
+                 { "title", "date", "file" } object to index.json. The empty state
+                 here is what shows before the loader has anything to render. -->
+            <div class="notes">
+              <p class="notes__empty">Nothing posted yet.</p>
+            </div>
           </div>
-          
+
         </div>
       </div>
     </div>
