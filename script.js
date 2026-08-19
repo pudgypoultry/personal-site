@@ -26,6 +26,11 @@
   var swapTimer = null;
   var cleanupTimer = null;
 
+  // What region the user is currently looking at. Tracked so a hashchange that
+  // does not switch tabs (e.g. picking an entry within Thoughts) does not play
+  // the full wipe -- it would be visual noise for what is really an in-page nav.
+  var currentRegion = null;
+
   $(document).on('click', '.main-menu a', function (e) {
     origin = { x: e.clientX, y: e.clientY };
   });
@@ -150,15 +155,19 @@
     if (e.type === 'load') {
       // Nothing to transition away from on first paint, so just show the region.
       showRegion(region);
-    } else {
-      // Play the automaton, which changes the tab once it has the screen covered.
+    } else if (region !== currentRegion) {
+      // Real tab change: play the automaton wipe.
       playWipe(region);
     }
+    // If region === currentRegion this was in-tab navigation (e.g. picking an
+    // entry within Thoughts); no wipe, and the region is already visible so
+    // showRegion is a no-op.
+    currentRegion = region;
 
-    // Ask the Thoughts loader (below) to scroll to a specific entry once it has
-    // finished fetching them. Harmless if the slug does not match anything.
-    if (region === '#thoughts' && slug && window.__requestThoughtsJump) {
-      window.__requestThoughtsJump(slug);
+    // Tell the Thoughts loader which view to draw. Fires on every #thoughts
+    // hashchange, so list <-> single transitions and cold deep-links both work.
+    if (region === '#thoughts' && window.__setThoughtsView) {
+      window.__setThoughtsView(slug);
     }
 
     // Alternate method: Use AJAX to load the contents of an external file into a div based on URL fragment
@@ -548,47 +557,43 @@
 
 
 // ---- Thoughts loader -------------------------------------------------------
-// Entries used to live inline in index.html, one <article> per piece; the file
-// grew unbounded and every visitor downloaded every piece ever written on the
-// first paint. Now each entry is its own tiny HTML fragment in thoughts/, listed
-// once in thoughts/index.json, and this block fetches the manifest, sorts by
-// date newest-first, and renders each fragment into #thoughts .notes.
+// Entries live as individual HTML fragments in thoughts/, listed once in
+// thoughts/index.json. On page load this fetches the manifest, fetches every
+// fragment in parallel, and keeps them all in memory. The URL then decides
+// which of two views is drawn into #thoughts .notes:
 //
-// Adding a new piece is: write thoughts/2026-09-01-my-title.html (just paragraph
-// content, no article wrapper -- the wrapper, title and date all come from the
-// manifest so styling stays in one place), then append one entry to index.json.
-// Ordering is by date, so the source order of the manifest doesn't matter.
+//   #thoughts             -> list view (a preview card per entry)
+//   #thoughts/<slug>      -> single view (that entry, full body, back link)
 //
-// Deep links: #thoughts/2026-09-01-my-title activates the tab AND scrolls the
-// entry into view. See the router in the main IIFE above.
+// The router in the main IIFE calls __setThoughtsView on every hashchange to
+// #thoughts, so both list<->single transitions and cold deep-links land in the
+// right place. No wipe fires for within-tab navigation between the two views.
+//
+// Adding a new piece is: write thoughts/<slug>.html (body markup only, no
+// wrapper), then append one { title, date, file } object to index.json.
 (function () {
 
   var MANIFEST = 'thoughts/index.json';
-
-  var loaded = false;
-  var pendingSlug = null;
+  var SNIPPET_CHARS = 200;
 
   var container = document.querySelector('#thoughts .notes');
   if (!container) { return; }
 
-  // Router hook: called from the main script's hashchange handler. Either scrolls
-  // immediately (if entries are already in the DOM) or remembers the request so
-  // the render pass can honour it.
-  window.__requestThoughtsJump = function (slug) {
-    if (!slug) { return; }
+  var entries = [];        // { title, date, file, slug, body } sorted newest-first
+  var loaded = false;
+  var pendingView = null;  // null = list, string = requested slug
+
+  // Router hook. Called with a slug to show that single entry, or with nothing
+  // (or an unknown slug) to show the list. Safe to call before the manifest has
+  // finished loading -- the request is queued and honoured on first render.
+  window.__setThoughtsView = function (slug) {
+    var view = slug || null;
     if (loaded) {
-      scrollToSlug(slug);
+      show(view);
     } else {
-      pendingSlug = slug;
+      pendingView = view;
     }
   };
-
-  function scrollToSlug(slug) {
-    var el = document.getElementById('thought-' + slug);
-    if (el && el.scrollIntoView) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
 
   function slugOf(file) {
     return String(file).replace(/\.html?$/i, '');
@@ -610,57 +615,108 @@
     return months[parseInt(m[2], 10) - 1] + ' ' + m[1];
   }
 
-  function renderEntries(entries) {
-    // Sort newest-first, ties broken by manifest order (so a same-day pair stays
-    // in whatever order the author chose to list them).
-    var indexed = entries.map(function (e, i) { return { e: e, i: i }; });
-    indexed.sort(function (a, b) {
-      if (a.e.date !== b.e.date) { return a.e.date < b.e.date ? 1 : -1; }
-      return a.i - b.i;
-    });
+  // Take the plain-text of the first paragraph, trim to SNIPPET_CHARS, and
+  // ellipsize at a word boundary so preview cards look consistent even when
+  // fragments have wildly different structure.
+  function snippetOf(body) {
+    var host = document.createElement('div');
+    host.innerHTML = body;
+    var p = host.querySelector('p');
+    var text = (p ? p.textContent : host.textContent).replace(/\s+/g, ' ').trim();
+    if (text.length <= SNIPPET_CHARS) { return text; }
+    var cut = text.slice(0, SNIPPET_CHARS - 1).replace(/\s+\S*$/, '');
+    return cut + '…';
+  }
 
-    // Fetch every fragment in parallel; wait for all so the DOM order matches
-    // the sort. A fragment that fails simply comes back empty and its entry gets
-    // its title and date but no body -- the manifest metadata is still visible.
-    return Promise.all(indexed.map(function (x) {
+  function findBySlug(slug) {
+    for (var i = 0; i < entries.length; i++) {
+      if (entries[i].slug === slug) { return entries[i]; }
+    }
+    return null;
+  }
+
+  function meta(entry) {
+    return '<p class="note__meta"><time datetime="' + escape(entry.date) + '">' +
+             escape(formatDate(entry.date)) +
+           '</time></p>';
+  }
+
+  function renderList() {
+    container.classList.remove('notes--single');
+    container.classList.add('notes--list');
+    container.innerHTML = '';
+
+    if (!entries.length) {
+      container.innerHTML = '<p class="notes__empty">Nothing posted yet.</p>';
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    entries.forEach(function (e) {
+      var card = document.createElement('a');
+      card.className = 'note-preview';
+      card.href = '#thoughts/' + e.slug;
+      card.innerHTML =
+        '<h3 class="note__title">' + escape(e.title) + '</h3>' +
+        meta(e) +
+        '<p class="note__snippet">' + escape(snippetOf(e.body)) + '</p>';
+      frag.appendChild(card);
+    });
+    container.appendChild(frag);
+  }
+
+  function renderSingle(entry) {
+    container.classList.remove('notes--list');
+    container.classList.add('notes--single');
+    container.innerHTML =
+      '<p class="notes__back"><a href="#thoughts">&larr; All thoughts</a></p>' +
+      '<article class="note note--full" id="thought-' + entry.slug + '">' +
+        '<h3 class="note__title">' + escape(entry.title) + '</h3>' +
+        meta(entry) +
+        entry.body +
+      '</article>';
+
+    // Land at the top of the entry, not wherever the reader last scrolled.
+    window.scrollTo(0, 0);
+  }
+
+  function show(view) {
+    if (!view) { return renderList(); }
+    var entry = findBySlug(view);
+    return entry ? renderSingle(entry) : renderList();
+  }
+
+  function ingest(manifestEntries) {
+    var sorted = manifestEntries
+      .map(function (e, i) { return { e: e, i: i }; })
+      .sort(function (a, b) {
+        if (a.e.date !== b.e.date) { return a.e.date < b.e.date ? 1 : -1; }
+        return a.i - b.i;
+      });
+
+    return Promise.all(sorted.map(function (x) {
       return fetch('thoughts/' + x.e.file, { cache: 'no-cache' })
         .then(function (r) { return r.ok ? r.text() : ''; })
         .catch(function () { return ''; });
     })).then(function (bodies) {
-      container.innerHTML = '';
-
-      if (!indexed.length) {
-        container.innerHTML = '<p class="notes__empty">Nothing posted yet.</p>';
-        loaded = true;
-        return;
-      }
-
-      var frag = document.createDocumentFragment();
-      indexed.forEach(function (x, k) {
-        var article = document.createElement('article');
-        article.className = 'note';
-        article.id = 'thought-' + slugOf(x.e.file);
-        article.innerHTML =
-          '<h3 class="note__title">' + escape(x.e.title || '') + '</h3>' +
-          '<p class="note__meta"><time datetime="' + escape(x.e.date || '') + '">' +
-            escape(formatDate(x.e.date)) +
-          '</time></p>' +
-          bodies[k];
-        frag.appendChild(article);
+      entries = sorted.map(function (x, k) {
+        return {
+          title: x.e.title || '',
+          date: x.e.date || '',
+          file: x.e.file,
+          slug: slugOf(x.e.file),
+          body: bodies[k] || ''
+        };
       });
-      container.appendChild(frag);
-
       loaded = true;
-      if (pendingSlug) {
-        scrollToSlug(pendingSlug);
-        pendingSlug = null;
-      }
+      show(pendingView);
+      pendingView = null;
     });
   }
 
   fetch(MANIFEST, { cache: 'no-cache' })
     .then(function (r) { return r.ok ? r.json() : { entries: [] }; })
-    .then(function (data) { return renderEntries((data && data.entries) || []); })
+    .then(function (data) { return ingest((data && data.entries) || []); })
     .catch(function () {
       // Manifest missing or malformed: leave the initial empty state alone.
       loaded = true;

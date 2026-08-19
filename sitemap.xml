@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Single-page site: all tab regions (#home, #about, #thoughts) live in one
+  document, so there is only one crawlable URL to declare. Google discovers the
+  individual thought entries by executing the page's JavaScript and following
+  the preview cards, so listing them here is unnecessary.
+
+  Bump <lastmod> whenever the content meaningfully changes so crawlers know
+  to re-fetch. If the domain ever moves again, update the <loc> here and the
+  Sitemap: line in robots.txt.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://axiomata.software/</loc>
+    <lastmod>2026-08-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

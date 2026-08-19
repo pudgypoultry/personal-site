@@ -4,10 +4,160 @@
     <!-- Page setup -->
     <meta charset="utf-8">
     <title>Andrew Teske</title>
-    <meta name="description" content="Andrew Teske personal website, graduate computer science and economics, game dev">
+    <meta name="description" content="Andrew Teske — software engineer building games, simulations, and cellular automata. MS Computer Science (Oregon), MS Economics, BS Mathematics.">
     <meta name="author" content="Andrew Teske">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
     <link rel="icon" type="image/png" href="favicon.png">
+
+    <!-- Canonical URL for the site. Every URL below (Open Graph, JSON-LD @id
+         and url fields) points at the same domain; keep them in sync if this
+         ever changes. -->
+    <link rel="canonical" href="https://axiomata.software/">
+
+    <!-- Open Graph + Twitter Card: controls how a link to this site looks
+         when pasted into Slack, LinkedIn, Discord, email preview cards, etc.
+         Without these, the link renders as bare text. -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://axiomata.software/">
+    <meta property="og:title" content="Andrew Teske">
+    <meta property="og:description" content="Software engineer building games, simulations, and cellular automata. MS Computer Science, MS Economics, three years teaching CS at the University of Oregon.">
+    <meta property="og:site_name" content="Andrew Teske">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Andrew Teske">
+    <meta name="twitter:description" content="Software engineer building games, simulations, and cellular automata. MS Computer Science, MS Economics, three years teaching CS at the University of Oregon.">
+
+    <!-- schema.org/Person as JSON-LD. This is the block that recruiter tools,
+         Google's knowledge panel, LinkedIn's preview generator, and modern
+         LLM-based readers look for first. Every field is a truthful claim
+         drawn from the resume; adding hidden persuasion text alongside would
+         defeat the point (bots that read structured data are exactly the
+         ones trained to notice mismatches). Edit here to update facts. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://axiomata.software/#website",
+          "url": "https://axiomata.software/",
+          "name": "Andrew Teske",
+          "publisher": { "@id": "https://axiomata.software/#person" },
+          "inLanguage": "en"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://axiomata.software/#person",
+          "name": "Andrew Teske",
+          "url": "https://axiomata.software/",
+          "email": "mailto:ateske@uoregon.edu",
+          "jobTitle": "Software Engineer",
+          "description": "Software engineer building interactive systems in Godot and Unity, with a focus on cellular automata, rule-driven simulations, and games. Three years teaching computer science at the University of Oregon (2022-2025), including graduate sections of Computer Organization and Game Development. Quantitative background in economics and mathematics.",
+          "sameAs": [
+            "https://github.com/pudgypoultry",
+            "https://www.linkedin.com/in/andrew-teske-665274389/",
+            "https://axiomata.itch.io"
+          ],
+          "alumniOf": [
+            {
+              "@type": "CollegeOrUniversity",
+              "name": "University of Oregon",
+              "url": "https://uoregon.edu"
+            },
+            {
+              "@type": "CollegeOrUniversity",
+              "name": "Oklahoma State University",
+              "url": "https://okstate.edu"
+            }
+          ],
+          "hasCredential": [
+            {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "degree",
+              "educationalLevel": "Master's Degree",
+              "name": "MS, Computer Science",
+              "dateCreated": "2026-03",
+              "recognizedBy": { "@type": "CollegeOrUniversity", "name": "University of Oregon" }
+            },
+            {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "degree",
+              "educationalLevel": "Master's Degree",
+              "name": "MS, Economics",
+              "dateCreated": "2019",
+              "recognizedBy": { "@type": "CollegeOrUniversity", "name": "University of Oregon" }
+            },
+            {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "degree",
+              "educationalLevel": "Bachelor's Degree",
+              "name": "BS, Economics",
+              "dateCreated": "2017",
+              "recognizedBy": { "@type": "CollegeOrUniversity", "name": "Oklahoma State University" }
+            },
+            {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "degree",
+              "educationalLevel": "Bachelor's Degree",
+              "name": "BS, Mathematics",
+              "dateCreated": "2014",
+              "recognizedBy": { "@type": "CollegeOrUniversity", "name": "Oklahoma State University" }
+            }
+          ],
+          "knowsAbout": [
+            "Software engineering",
+            "Game development",
+            "Cellular automata",
+            "Simulation",
+            "GPU compute shaders",
+            "WebGPU",
+            "C",
+            "C++",
+            "C#",
+            "Python",
+            "Java",
+            "Godot",
+            "Unity",
+            "Blender",
+            "Krita",
+            "Adobe Photoshop"
+          ],
+          "workLocation": {
+            "@type": "Place",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Eugene",
+              "addressRegion": "OR",
+              "addressCountry": "US"
+            }
+          }
+        },
+        {
+          "@type": "CreativeWork",
+          "name": "Sand",
+          "url": "https://pudgypoultry.github.io/Sand",
+          "description": "Voxel simulation with every voxel updated on the GPU via a compute shader. Requires WebGPU.",
+          "creator": { "@id": "https://axiomata.software/#person" },
+          "keywords": "GPU, compute shader, WebGPU, voxel, simulation"
+        },
+        {
+          "@type": "CreativeWork",
+          "name": "The Paladin - Slay the Spire Character Mod",
+          "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2420293022",
+          "description": "Original character mod for Slay the Spire with 60+ new cards. Approximately 9,200 subscribers.",
+          "creator": { "@id": "https://axiomata.software/#person" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Card Game Skeleton",
+          "url": "https://godotengine.org/asset-library/asset/4802",
+          "description": "Published Godot Asset Library add-on for card game backend management.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Cross-platform",
+          "creator": { "@id": "https://axiomata.software/#person" }
+        }
+      ]
+    }
+    </script>
   
     <!-- Stylesheets -->
     <!-- Reset default styles and add support for google fonts -->
@@ -255,9 +405,6 @@
 
           <div id="thoughts" class="content-region hide">
             <h2>Thoughts</h2>
-            <p class="lede lede--aside">
-              Workin' on this. Will post my thoughts that don't fit in 300 characters here.
-            </p>
 
             <!-- Entries are individual files in thoughts/, listed once in
                  thoughts/index.json. The block at the bottom of script.js reads

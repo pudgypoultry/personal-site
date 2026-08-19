@@ -1,0 +1,243 @@
+<h2>Disclaimer and Promises</h2>
+
+<p>
+    Everything said here is my own opinion.
+    I am a software developer and therefore periodically interact with LLMs. However,
+    I have ethical qualms and concerns with how they exist in their current state. 
+    As such, I make the following promises about my personal work upfront:
+</p>
+
+    <ol>
+        <li>I will not use images, sounds or creative text generated from an LLM in a personal project.</li>
+        <li>I will always be honest about any LLM usage.</li>
+        <li>I will never commit a line of code generated from an LLM without hand-checking it myself.</li>
+    </ol>
+
+<blockquote>
+    I believe that using an LLM to express my thoughts would defeat the purpose of expressing my thoughts.
+    <br>
+    <br>
+    If you read something meant to be communication from me, I wrote it by hand and it came from my brain.
+</blockquote>
+
+<p>
+    Upfront, fuck OpenAI, Antrophic, etc. The people running those companies are incredibly anti-human,
+    anti-labor, and do not in the slightest deserve to make the decisions they do that affect the lives
+    of billions. Full stop.
+</p>
+
+<p>
+    In terms of the use of LLMs, I have to acknowledge use of the cloud, AWS, etc are also harmful
+    in comparable ways with even fewer means of recourse or option; but due to their backstage nature,
+    not very many people outside of tech really care or get it. However, those don't use water or produce
+    constant infrasound or aren't currently pushing to invade small towns and fuck up their economies in
+    the same ways. LLMs are the current focus of venture capital and are causing our entire economy to heave
+    and eventually to hurl all over workers.
+</p>
+
+<h2>Problems and Complexity</h2>
+<p>
+    For those that don't want to hear an overtly technical explanation of why I feel these things, skip to the 
+    next section. For everyone else, the root of my reasoning can be found through my interest in areas of 
+    theoretical computer science. I think of automata theory and complexity theory as the intersections 
+    of mathematics, linguistics, and computer science; they're areas of study that deal in what can be computed, 
+    sure, but they also helps us figure out what can and cannot be <i>understood</i> in any consistent manner.
+</p>
+
+<p>
+    Falling under the overlap of these two areas is the idea of <a href="https://en.wikipedia.org/wiki/NP-completeness">"NP-Completeness"</a>.
+    There is an <a href="https://en.wikipedia.org/wiki/Complexity_class">entire hierarchy of complexity classes</a>, but I want to focus on 
+    the idea of <b>Deterministic Polynomial Time</b> problems vs <b>Non-Determinisitc Polynomial Time</b> problems <i>(also known as P and NP 
+    problems respectively)</i>. While there's a lot to discuss about complexity classes, the difference between P and NP problems can mostly 
+    be summarized by two questions: "How hard is it to compute a potential answer?" and "How hard is it to check whether a potential answer 
+    is valid?" Potential answers in both P and NP problems can quickly be validated. However, for problems that fall under the NP class, 
+    finding potential answers can take exponentially more time as size of the problem grows. 
+</p>
+
+<p>
+    Solving a Rubik's Cube, once you know the process, is easy to produce a potential answer for and easy to verify. Each cell needs to end up
+    in a specific position and there exist algorithms such that you can pick a position and work a chosen tile into that position given specific
+    constraints. If you provide me with a list of Rubik's Cube moves, I can then easily follow that list and look at the cube to make sure all
+    of the sides are correct. Solving a Rubik's Cube falls under the complexity class of P. Solving for the best chess move, however, is not so
+    simple; every additional piece means adding an entire class of moves to the potential next state of the board, not to mention that the
+    existence of a new piece added to the board would change the evaluation for the choice of moving any other piece. However, if I were to give
+    you a potential move, the new state of the board could be analyzed quickly by an expert or a computer to answer the question "which player 
+    is ahead in this board's state?" Hard to propose an answer to, easy to verify; this is an NP problem.
+</p>
+
+<p>
+    When we want to solve an NP-hard problem with computers, we have to come up with heuristics of some kind that we are able to argue are "good
+    enough" for the job. For chess, we assign each piece a value as well as some value to board positions in general for evaluation, then we
+    iterate over every possible move, compare the board states, and choose the best one according to our heuristics. We simply don't know
+    if the way we've found to solve this problem is the <i>best</i> way to solve this problem; so much so that sometimes problems that were
+    previously deemed as belonging to the NP class were revealed to actually have been part of the P class. If you've heard of the "P = NP"
+    problem, this is the heart of it; what if every problem in the NP class actually lives in P and we simply aren't aware of the way to
+    show it? In all likelihood, this is not true, but we have no means currently of proving as much.
+</p>
+
+<h2>Agency and Responsibility</h2>
+<p>
+    If you skipped the last section, just know that all of the previous argument is made to build to the point that I believe that
+    the ideal use case for an LLM, separate of ethics I'll discuss later, is to suggest answers to language-related NP-hard problems
+    then for human beings to deterministically verify those potential answers as correct or good enough by that human's judgement. 
+    I'm not in full Butlerian Jihad mode, but I do believe that the second we allow a machine to make a decision while refusing to assign
+    responsibility to a human, we open wide the gate inviting infinite bad-faith interaction and leave as much room for manipulation
+    and manufactoring of consent. Human beings have agency and silicon does not; we call them "Agents", but we pretend and believe in
+    the kayfabe game that they have any kind of agency themselves. When we stop understanding that we are playing pretend with a chatbot,
+    we start anthropomorphizing it into a position of giving it unfair personhood. I worry about how many people do not hold this line
+    in place as solidly as they should.
+</p>
+
+<p>
+    Ultimately, my biggest complaint about the technology of LLMs themselves at the moment is that I believe a chat-style interface is
+    the worst possible setup for its use. These things are industrial tools like massive table saws, and applying a chat-style interface
+    to the table saw is like putting a speaker and a face on it that say "Please pet me! I love being pet! I can even be pet while spinning
+    if you're careful enough!" People have died as a result of these chat interfaces, people are using these as "therapists" when the
+    core job of a therapist is to use their own humanity to interact with and attempt to heal the humanity of another human. These machines
+    cannot, in the slightest, be effective therapists but instead act as the shadow of one. The unfortunate truth is that so many people
+    are so starved for understanding and communication that the shadow of a therapist feels more real than most interactions they've 
+    encountered. The frustration and fear I feel with respect to the use of LLMs is a combination of the frustration and anger I hold
+    for those in control of the hyperscaling expansion mixed with the valid and necessary fear I have of the knife that constantly
+    reminds me to always cut away from myself.
+</p>
+
+<p>
+    I hold no judgement for those attempting to use an LLM as a therapist, these people are pushed into this situation by the economy
+    and environment they live in; I hold all judgement for those using untold resources to push these bots to fulfill these rolls
+    rather than simply providing those resources to the people who need them. The profit motive has led the drive to improve this
+    technology toward seeping into the every crevice of human experience when it doesn't even begin to help in 99% of applications.
+    If this technology were so great, they would have made it an "opt in" style of interaction by default rather than "opt out". I
+    cannot think of a single other technological breakthrough that had to start by being forced onto everyone in every facet of
+    potential interaction rather than simply showing how useful it is to entice people to use it. The responsibility of the sum
+    total of this collective disutility belongs squarely on the shoulders of those with the power to make meaningful decisions with
+    billions and billions of dollars in resources. When people are told en masse to ignore the fact that the thing asking you to pet it is
+    a table saw, and that table saw is repeatedly disguised as a cute pet or friend, they will start to see it as something other 
+    than the dangerous table saw that it is.
+</p>
+
+<h2>Personal Lines and Economy</h2>
+<p>
+    If you're entirely anti-LLM use, I don't really blame you. If you are frustrated at me for periodically using LLMs, I don't blame 
+    you at all. Once a year since 2022, I've messed with whatever LLM is lauded as best to see how I feel working with it in my
+    non-game engine related work (I still don't want to use these when I make games, I love the act of programming and I make games to have
+    fun). This year's attempt was the sand simulator linked on the Projects page. My usage was as such:
+</p>
+
+    <ol>
+        <li>Have it show immediately verifiable examples of setting up using Vulkan with my scaffolded C++.</li>
+        <li>Have it show immediately verifiable examples of things I'm looking for in GLSL while I compare to work I found using search engines.</li>
+        <li>Describe very specific rules and processes for each type of block in a 3D sand simulation, then have it output options for implementation.</li>
+        <li>Once I iterated on this and wanted to share it, I decided to see what would happen if I prompted it to translate the compute and fragment 
+            shaders to WebGL equivalents instead. It did so after a bit of work.</li>
+    </ol>
+
+<p>
+    Every step I read the code output, I make sure that I understand it line by line and can verify with my experience that there exists no 
+    structural errors, then move on. This is the first year that it hasn't made me extremely frustrated to work with in terms of its output.
+    Every other year, the output was so buggy or shittily done that I knew that I'd just be less frustrated writing it myself from scratch.
+    This year's foray worked surprisingly smoothly code-wise but left me so frustrated with the UI interaction that it actually had me better
+    interoscepting around those frustrations from before (the aforementioned mix of anger and frustration at the owners of it mixed with the 
+    respect and fear I have for a kitchen knife). I have found that I feel it important to actively put walls up for myself in that I do not 
+    say "You" or "We" when entering prompts; this thing is a machine and not a person. If I begin to refer to it as a "work partner" or 
+    allow my monkey brain to plug in with the chat prompt as designed, I worry that I won't be as aware of the direction the knife is cutting.
+    I'm not saying that others need to do so, and it may be overly attentive, but so far I've noticed that if I avoid referring to the table
+    saw as if it had personhood, I have an easier time tracking where I'm sitting with my behavior around it and after a few weeks of use I
+    still feel no natural pull to continue using it, nor do I feel any need to include it in my game work.
+</p>
+
+<p>
+    The biggest part here is that translation from using Vulkan to WebGL. This is not something I ever would have done myself, nor would it have
+    been something I hire anyone to do for this personal project. No human being lost work because of this decision, and now there exists a toy
+    that anyone can play with that loads right in the Chrome browser. This is exactly what I was talking about when I mentioned the NP-hard natural
+    language problems; translation from language to language is exactly this. I learned a lot from this project in exactly the same way I would have by
+    copy/pasting code from others like any other software project, but in this instance that copy/pasting came from aggregated code training data.
+    My biggest UX complaint is actually the lack of friction in the development process where it simply shows the number of lines for the diff, then I have to
+    do extra work to verify the changes myself. While this isn't so much a problem for myself, I do worry that this lack of friction <i>encourages</i> people
+    who already don't know how to verify this themselves to do even <i>less</i> work toward any safe or effective version of that verification.
+    We could argue about this all day, but I will never be convinced that code that doesn't contain personally-identifiable information should be
+    in any way secret or copyrighted for the same reasons I don't believe any recipe or formula should ever be secret or copyrighted. Keeping those
+    things secret can easily lead to allergic reactions in the recipe/formula case as well as room for horrific exploitation via backdoors and
+    exploits in the secret code case.
+</p>
+
+<blockquote>
+    No one can own a fact that affects everyone.
+    <br>
+    <br>
+    The only facts you "own" are your memories.
+</blockquote>
+
+<p>
+    The biggest detriment, in my opinion, was that any previous project like this would have included implicit (but direct) collaboration with others.
+    Before, I would have gone to substack and seen people who answered these questions and had a name to potentially look more into; by using the 
+    natural language matrix multiplication machine, any potential collaboration was laundered through an averaging and obfuscation of <i>who</i>
+    did what. My recourse with respect to asking a follow up question is then funneled back into the same machine rather than looking for more answers
+    from that user or by finding another person's answer. I've added into the settings to directly credit and link to sources as often as possible, 
+    but due to its probabilistic nature in following that system prompt I can't really be sure it's telling the truth without extra work.
+</p>
+
+<p>
+    The current expansion of data centers and venture capital will eventually implode in some manner, and it certainly won't go how these companies expect. 
+    I have a lot of thoughts on that but in summary there are many railroad companies whose only legacy was to end up as those who laid cheap track 
+    for their competitors (another reason profit maximization combined with competition can easily lead to worse outcomes for all). If we really
+    believed in using the capabilities of this tool for the purproses it can help with, we wouldn't be "hyperscaling" and abusing economies of scale with
+    respect to theft of art for training data and an attempt to become a simultaneous monopsony of computer hardware and monopoly of computational power.
+</p>
+
+<p>
+    There are environmental concerns with respect to water consumption and constant infrasound output, as well as the fact that local economies are being 
+    exploited and extracted from in what (in my opinion) is a wide-scale tax fraud situation. This sucks. It sucks a lot and I hate that this is the reality
+    I live in. Simultaneously to all of this, the use of an LLM for code is not the poison pill to a project many believe it is. To borrow an example from
+    a friend, the computational power of some models has reached a point that red-team attacks can be trivially executed en masse by bad actors; to not use
+    the same computational power to defend against that with applications that create online connections would be irresponsible. If you want a direct example,
+    look at the situation with Mecca Chameleon's online play (great fucking game by the way, give it a shot with your friends). There are mods that include
+    hidden malware that execute when downloaded, and the lack of friction the game creates in downloading new maps with randos unintentionally makes it far 
+    easier to accidentally download a timebomb. What I am arguing is that it is extremely unfortunate that we've been put into this situation by the actions
+    of idiotic and childish billionaires, but the material reality is that we are in this situation and bad actors are being benefitted now more than ever to
+    perform scams at scale. Doing whatever we can to defend against these attacks does not mean a game is plagiarizing or "used the plagiarism machine". Or
+    to put it another way, refusing to do what we can to defend against those attacks doesn't materially benefit anyone and, actually, acts toward the
+    material <i>detriment</i> of many. I am not saying "always use LLMs for everything", but I am saying that if someone used an LLM in their programming project,
+    maybe just talk to them and ask why rather than jumping to saying "plagiarism" when that isn't even what's happening in a programming situation at all.
+</p>
+
+<p>
+    With that said, I personally find the use of AI-generated imagery, music, voice, and text in production environments to be extremely uncouth. I've long 
+    since stopped telling people they're any form of evil for doing so and I honestly no longer care if people are using it as a toy (generating a fake
+    greentext as a joke between friends or generating an image where everyone involved has consented). I no longer believe that it's worth screaming about and 
+    I honestly hope that many people who spend their time yelling at strangers online for doing so take a look inside and consider whether they're actually helping
+    or are simply picking today's sinner to brand. An ideal response would either be blocking/ignoring or attempts to genuinely talk to someone, but unfortunately 
+    having a genuine talk with a stranger is absurdly unlikely; our social media interactions are maximizing for social friction via minimizing friction in presentation 
+    of posts. If you're mad at someone you know for this, talk to them directly and approach them with a serious conversation rather than yelling at them, please; 
+    I say this from personal experience that if you open with yelling, it won't help. The only thing that changes minds of non-tech people with respect to this 
+    stuff is the combination of care between people and honesty.
+</p>
+
+<h2>Conclusions</h2>
+
+<p>
+    I don't think I'll be using LLMs in my personal game projects that don't require networking. I plan to do so for anything involving networking to ensure that 
+    I'm not leaving any awful backdoors for bad actors to exploit my players, but generating "content" for my game work is not anything I have any interest in doing.
+    Like I said at the beginning, if you're reading words that are my communication, I wrote it by hand; generating that text from a summary would defeat the entire fucking
+    purpose. I don't really hold judgement for people who do so on a small scale and then edit from there, but I hate doing it for myself and I'd rather just wrestle with 
+    chiseling out my meaning because that feels like the most honest expression I can provide. And doing any of this on an enterprise-scale is something I find actively 
+    gross. I believe that we as a species don't really handle changes in ethics with respect to changes in scale; a single person stealing bread to feed their family
+    is easily justifiable to me, but a company including stealing a loaf of bread as an important step in the production line would be insane. Difference in resources
+    aside, the scale requires a level of planning the individual does not have access to and the scale turns a single action into a repeated economic effect.
+</p>
+
+<p>
+    People who know me know that I think about language and friction in experience a lot. For a long time I abstained from LLM use entirely, but when I was doing so
+    I was also watching my students be pressed into using it to cheat and hoping that when I respond to their comments that it was their own words rather than the words 
+    of a machine that they didn't even check (I know a lot of them were using their own words so it's ok!). I had a lot of reasons to see their use as entirely
+    negative. Since graduating with my MS I've had more contact with professional software dev environments than academic ones and I've had to rethink my assumptions
+    quite a few times. I still don't feel <i>great</i> about most of their uses even when used responsibly as that "table saw" but I'm no longer railing against their
+    use. I don't want to be typing for another week straight but holy shit universities and schools are not in the slighest prepared for this and will likely have
+    a series of minor collapses until something changes, though I don't know if that will end in a better or worse state. In my opinion, we should not be blindly
+    minimizing friction, maximizing engagement, maximizing connection to monkey brain, and minimizing cost to the companies running this. We should be intentionally
+    targetting levels friction in design to minimize toxic engagement and connection to monkey brain without caring about what it costs these companies that are
+    performing the largest wealth extraction and tax fraud ever performed on the planet earth.
+</p>
+
+<p>
+    In essence I'm just saying that if you're going to use an LLM for any reason: Don't pet your table saw without the proper safety attire.
+</p>

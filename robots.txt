@@ -1,0 +1,10 @@
+# Personal portfolio site -- discoverability is the goal, so no crawler blocks.
+# That includes AI-training crawlers (GPTBot, ClaudeBot, PerplexityBot, and the
+# ChatGPT-User user agent), because LLM-based hiring and recruitment tools are
+# part of the audience this site's structured data is written for. Add blocks
+# here only if you decide otherwise later.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://axiomata.software/sitemap.xml
