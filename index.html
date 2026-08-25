@@ -1,41 +1,74 @@
 <!doctype html>
 <html>
   <head>
-    <!-- Path-routing receiver. Runs before anything else so the address bar
-         shows the final URL by the time the rest of the page renders.
+    <!-- Path-routing receiver. Must run before any asset tag, because it sets
+         the <base> every relative URL on the page resolves against.
 
-         Two paths converge on this block: (a) 404.html redirected here after
-         the server could not resolve a deep path like /thoughts/my-piece, and
-         (b) a bookmark using the old #hash routing scheme. In both cases we
-         rewrite the URL back to a clean path without touching history depth.
+         Two problems are solved here at once:
+
+         1. WHERE THE APP IS MOUNTED. This site is served both from a domain
+            root (axiomata.software/) and from a project subpath
+            (pudgypoultry.github.io/personal-site/). A hardcoded <base href="/">
+            works for the first and 404s every asset on the second, so the mount
+            point is worked out at runtime instead: strip any trailing filename,
+            then drop everything from the first known route segment onward.
+            Whatever is left is the app root.
+
+         2. RECOVERING A DEEP URL. A request for /thoughts/my-piece has no file
+            behind it, so the host serves 404.html, which bounces here with the
+            wanted path in ?p=. We restore it with replaceState. Old #hash
+            bookmarks get the same treatment.
+
+         On file:// there is no server and no mount point to speak of, so the
+         <base> is skipped entirely and relative URLs resolve next to the
+         document, which is what makes opening index.html directly still work.
     -->
     <script>
     (function () {
-      var q = window.location.search;
-      var m = q.match(/[?&]p=([^&]*)/);
+      var ROUTES = ['projects', 'thoughts'];
+
+      var search = window.location.search;
+      var hash = window.location.hash;
+      var target = null;
+
+      var m = search.match(/[?&]p=([^&]*)/);
       if (m) {
-        var target = decodeURIComponent(m[1]);
-        var rest = q.replace(/([?&])p=[^&]*&?/, '$1').replace(/[?&]$/, '');
-        window.history.replaceState(null, '', target + rest + window.location.hash);
-        return;
+        target = decodeURIComponent(m[1]);
+        search = search.replace(/([?&])p=[^&]*&?/, '$1').replace(/[?&]$/, '');
+      } else if (hash && hash.length > 1) {
+        // Legacy #region/slug bookmark. #about predates the Projects rename.
+        target = '/' + hash.slice(1).replace(/^about(\/|$)/, 'projects$1');
+        hash = '';
       }
-      // Legacy: rewrite bookmarked #region/slug into /region/slug. The old
-      // #about hash is remapped to /projects since that tab reads as Projects.
-      var h = window.location.hash;
-      if (h && h.length > 1) {
-        var legacy = h.slice(1).replace(/^about(\/|$)/, 'projects$1');
-        window.history.replaceState(null, '', '/' + legacy + window.location.search);
+
+      var path = target || window.location.pathname;
+      var dir = path.replace(/\/[^\/]*\.[^\/]*$/, '/');
+      var segs = dir.split('/').filter(Boolean);
+
+      var cut = segs.length;
+      for (var i = 0; i < segs.length; i++) {
+        if (ROUTES.indexOf(segs[i]) !== -1) { cut = i; break; }
+      }
+
+      var base = '/' + segs.slice(0, cut).join('/');
+      if (base.charAt(base.length - 1) !== '/') { base += '/'; }
+
+      window.__BASE__ = base;
+
+      if (window.location.protocol !== 'file:') {
+        var tag = document.createElement('base');
+        tag.href = base;
+        document.head.appendChild(tag);
+
+        if (target) {
+          window.history.replaceState(null, '', target + search + hash);
+        }
       }
     })();
     </script>
 
     <!-- Page setup -->
     <meta charset="utf-8">
-    <!-- All relative URLs on the page resolve against the site root regardless
-         of what path the address bar happens to be showing. Without this, a
-         deep URL like /thoughts/my-piece makes the browser try to fetch
-         style.css from /thoughts/my-piece/style.css and everything 404s. -->
-    <base href="/">
     <title>Andrew Teske</title>
     <meta name="description" content="Andrew Teske — software engineer building games, simulations, and cellular automata. MS Computer Science (Oregon), MS Economics, BS Mathematics.">
     <meta name="author" content="Andrew Teske">
@@ -228,10 +261,13 @@
       </div>
 
       <!-- Menu link fragment #id should match a div id. Example: <a href="#home"> links to <div id="home"></div>  -->
+      <!-- Relative hrefs on purpose: a leading slash would ignore <base> and
+           point at the domain root, which breaks when the site is served from
+           a project subpath. These resolve against whatever base was set. -->
       <ul class="main-menu">
-        <li><a href="/">Howdy</a></li>
-        <li><a href="/projects">Projects</a></li>
-        <li><a href="/thoughts">Thoughts</a></li>
+        <li><a href="./">Howdy</a></li>
+        <li><a href="projects">Projects</a></li>
+        <li><a href="thoughts">Thoughts</a></li>
       </ul>
     </header>
    
@@ -324,7 +360,7 @@
                 </a>
               </div>
 
-              <p class="more-link"><a href="/projects">All projects &rarr;</a></p>
+              <p class="more-link"><a href="projects">All projects &rarr;</a></p>
             </section>
 
             <section class="panel">

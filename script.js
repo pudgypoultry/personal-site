@@ -64,27 +64,21 @@
     $('.content-region').hide();
     $('.main-menu a').removeClass('active');
 
-    // Show the region and highlight its menu link. The nav uses path hrefs
-    // (see PATH_MAP below) while internally we identify regions by DOM id, so
-    // active-link matching goes through the map instead of comparing hrefs.
+    // Show the region and highlight its menu link. Matching goes through each
+    // link's *resolved* pathname rather than its href attribute: hrefs are
+    // relative so they work under any mount point, which means the attribute
+    // itself ("projects") is not something PATH_MAP can be keyed on.
     $(region).show();
-    var linkPath = pathForRegion(region);
-    if (linkPath) {
-      $('.main-menu a[href="' + linkPath + '"]').addClass('active');
-    }
+    $('.main-menu a').each(function () {
+      if (PATH_MAP[toRoute(this.pathname)] === region) {
+        $(this).addClass('active');
+      }
+    });
 
     var $region = $(region);
     $region.removeClass('wipe-in');
     if ($region.length) { $region[0].offsetWidth; } // forced reflow: replays the animation
     $region.addClass('wipe-in');
-  }
-
-  // Reverse of PATH_MAP: which nav link path corresponds to a region selector.
-  function pathForRegion(region) {
-    for (var p in PATH_MAP) {
-      if (PATH_MAP[p] === region) { return p; }
-    }
-    return null;
   }
 
   function clamp(v, lo, hi) {
@@ -158,8 +152,28 @@
     '/thoughts': '#thoughts'
   };
 
+  // Where the app is mounted, worked out by the receiver in index.html's head:
+  // "/" on a domain root, "/personal-site/" on a GitHub project page. Route
+  // matching happens on the path with this prefix removed, so PATH_MAP stays
+  // written in app-relative terms no matter where the site is deployed.
+  var BASE = window.__BASE__ || '/';
+
+  // Strip the mount point off a pathname, leaving an app-relative route.
+  function toRoute(pathname) {
+    var p = pathname;
+    if (BASE !== '/' && p.indexOf(BASE) === 0) {
+      p = '/' + p.slice(BASE.length);
+    }
+    return p.replace(/\/+$/, '') || '/';
+  }
+
+  // Build a full URL for an app-relative route, for pushState.
+  function toUrl(route) {
+    return (BASE + route.replace(/^\//, '')).replace(/\/{2,}/g, '/');
+  }
+
   function parseLocation() {
-    var path = location.pathname.replace(/\/+$/, '') || '/';
+    var path = toRoute(location.pathname);
 
     // /thoughts/<slug> is the one path pattern that carries data.
     var thoughtSlug = path.match(/^\/thoughts\/([\w-]+)$/);
@@ -194,22 +208,38 @@
     }
   }
 
-  // Intercept clicks on internal absolute links so navigation happens via
-  // pushState instead of a full page reload -- keeps the SPA alive and lets
-  // the wipe transition play. Modifier-key clicks (cmd/ctrl for new tab,
-  // shift for new window, middle-click) fall through to the browser.
-  $(document).on('click', 'a[href^="/"]', function (e) {
+  // Intercept clicks on internal links so navigation happens via pushState
+  // instead of a full page reload -- keeps the SPA alive and lets the wipe
+  // transition play. Links are matched on their *resolved* URL rather than the
+  // raw href, because internal hrefs are relative now (see the note on the nav
+  // markup) and the browser has already resolved them against <base>.
+  //
+  // Modifier-key clicks (cmd/ctrl for a new tab, shift for a new window,
+  // middle-click) fall through to the browser untouched.
+  $(document).on('click', 'a', function (e) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) { return; }
-    var $a = $(this);
-    if ($a.attr('target') === '_blank' || $a.attr('download') != null) { return; }
 
-    var href = $a.attr('href');
-    if (!href || href.charAt(0) !== '/' || href.charAt(1) === '/') { return; }
+    var a = this;
+    if (a.target === '_blank' || a.hasAttribute('download')) { return; }
+    if (!a.origin || a.origin !== location.origin) { return; }   // external
+    if (a.pathname.indexOf(BASE) !== 0) { return; }              // outside the app
 
-    e.preventDefault();
-    if (href !== location.pathname + location.search) {
-      window.history.pushState(null, '', href);
+    // Anything that names a real file (resume.pdf, an image) is a genuine
+    // navigation, not a route.
+    if (/\.[^\/]+$/.test(a.pathname)) { return; }
+
+    var dest = a.pathname + a.search + a.hash;
+    if (dest === location.pathname + location.search + location.hash) {
+      e.preventDefault();
+      return;
     }
+
+    try {
+      window.history.pushState(null, '', dest);
+    } catch (err) {
+      return;   // e.g. file://, where pushState is not allowed: let it navigate
+    }
+    e.preventDefault();
     route(false);
   });
 
@@ -620,6 +650,7 @@
 // wrapper), then append one { title, date, file } object to index.json.
 (function () {
 
+  var BASE = window.__BASE__ || '/';
   var MANIFEST = 'entries/index.json';
   var SNIPPET_CHARS = 200;
 
@@ -865,7 +896,7 @@
       if (!el) {
         el = document.createElement('a');
         el.className = 'spiral-cell spiral-cell--entering';
-        el.href = '/thoughts/' + entry.slug;
+        el.href = BASE + 'thoughts/' + entry.slug;
         positionCell(el, slot);
         applyBackdrop(el, entry);
         spiralStage.appendChild(el);
@@ -970,7 +1001,7 @@
     entries.forEach(function (e) {
       var card = document.createElement('a');
       card.className = 'note-preview';
-      card.href = '/thoughts/' + e.slug;
+      card.href = BASE + 'thoughts/' + e.slug;
       card.innerHTML =
         '<h3 class="note__title">' + escape(e.title) + '</h3>' +
         meta(e) +
@@ -993,7 +1024,7 @@
     container.classList.remove('notes--list');
     container.classList.add('notes--single');
     container.innerHTML =
-      '<p class="notes__back"><a href="/thoughts">&larr; All thoughts</a></p>' +
+      '<p class="notes__back"><a href="' + BASE + 'thoughts">&larr; All thoughts</a></p>' +
       '<article class="note note--full" id="thought-' + entry.slug + '">' +
         '<h3 class="note__title">' + escape(entry.title) + '</h3>' +
         meta(entry) +

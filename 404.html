@@ -4,21 +4,36 @@
   <meta charset="utf-8">
   <title>Andrew Teske</title>
   <!--
-    GitHub Pages does not offer server-side routing, but it does serve this file
-    for any path it cannot resolve. We use that as an SPA fallback: encode the
-    requested path into a query parameter, redirect to the site root, and let a
-    tiny receiver in index.html decode it and put the real URL back into the
-    address bar via history.replaceState.
+    GitHub Pages has no server-side routing, but it does serve this file for any
+    path it cannot resolve. We use that as an SPA fallback: encode the requested
+    path into a query parameter, redirect to the app root, and let the receiver
+    in index.html decode it and put the real URL back in the address bar with
+    history.replaceState.
 
-    Net effect: axiomata.software/thoughts/my-piece loads index.html with the
-    address bar reading /thoughts/my-piece, and the router picks it up as if
-    the server had served that path directly.
+    The app root is worked out the same way the receiver does it -- strip
+    everything from the first known route segment onward -- so this works both
+    at a domain root (axiomata.software/) and on a project subpath
+    (pudgypoultry.github.io/personal-site/). Hardcoding "/" here would bounce
+    subpath visitors to the wrong site entirely.
   -->
   <script>
   (function () {
-    var target = window.location.pathname + window.location.search;
-    var encoded = encodeURIComponent(target);
-    window.location.replace('/?p=' + encoded + window.location.hash);
+    var ROUTES = ['projects', 'thoughts'];
+
+    var path = window.location.pathname;
+    var dir = path.replace(/\/[^\/]*\.[^\/]*$/, '/');
+    var segs = dir.split('/').filter(Boolean);
+
+    var cut = segs.length;
+    for (var i = 0; i < segs.length; i++) {
+      if (ROUTES.indexOf(segs[i]) !== -1) { cut = i; break; }
+    }
+
+    var base = '/' + segs.slice(0, cut).join('/');
+    if (base.charAt(base.length - 1) !== '/') { base += '/'; }
+
+    var wanted = path + window.location.search;
+    window.location.replace(base + '?p=' + encodeURIComponent(wanted) + window.location.hash);
   })();
   </script>
 </head>
