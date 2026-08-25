@@ -326,6 +326,163 @@ ul.main-menu li a.active {
   max-width: 40em;
 }
 
+/**
+ * Spiral index
+ *
+ * The Thoughts index is a Fibonacci-style spiral of eight cells that holds its
+ * position while the page scrolls past it. The tall .spiral-track supplies the
+ * scroll distance; .spiral-sticky pins the grid inside it; script.js maps how
+ * far the track has travelled onto which eight entries are shown and which slot
+ * each one occupies. Slot geometry is set inline as percentages, so the only
+ * thing here is the look and the transition that carries a cell between slots.
+ */
+.spiral-track {
+  position: relative;
+  /* height is set inline: one STEP_PX per window position, plus a viewport */
+}
+.spiral-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+.spiral-stage {
+  position: relative;
+  width: 100%;
+  /* Portrait, matching the reference sketch. The spiral is laid out in
+     percentages so any aspect works, but this one keeps the smallest cells
+     from collapsing into slivers. */
+  aspect-ratio: 3 / 4;
+  max-height: 88vh;
+  margin: 0 auto;
+}
+
+.spiral-cell {
+  position: absolute;
+  /* Slot geometry is a percentage of the stage, so padding and border have to
+     be drawn inside it -- otherwise every cell overflows its slot by 26px. */
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: rgba(0,0,0,.55);
+  background-repeat: no-repeat;
+  border: 1px solid rgba(239,109,61,.22);
+  color: #cfd2da;
+  text-decoration: none;
+
+  /* The move between slots. Position and size are not compositor-friendly
+     properties, but there are only eight cells and they move only when the
+     window changes, so the cost is irrelevant next to the clarity of letting
+     the browser tween the geometry directly. */
+  transition: left .55s cubic-bezier(.22,.61,.36,1),
+              top .55s cubic-bezier(.22,.61,.36,1),
+              width .55s cubic-bezier(.22,.61,.36,1),
+              height .55s cubic-bezier(.22,.61,.36,1),
+              opacity .35s ease,
+              border-color .2s ease,
+              background-color .2s ease;
+}
+.spiral-cell:hover,
+.spiral-cell:focus {
+  border-color: #EF6D3D;
+  background-color: rgba(0,0,0,.3);
+  z-index: 2;
+}
+
+/* Entering and leaving the spiral: fade rather than pop. */
+.spiral-cell--entering { opacity: 0; }
+.spiral-cell--leaving  { opacity: 0; pointer-events: none; }
+
+/* Cells showing the default artwork -- a patch of the automaton sheet -- must
+   not be smoothed on the way up, same as the sheet's use in the transition. */
+.spiral-cell--pattern {
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Slots with no entry behind them yet. Dimmed and dashed so the spiral still
+   reads as a whole shape while the archive is small, without pretending there
+   is something there to click. */
+.spiral-cell--placeholder {
+  opacity: .32;
+  border-style: dashed;
+  border-color: rgba(239,109,61,.18);
+  pointer-events: none;
+}
+
+/* The caption. It carries its own scrim because the artwork behind it is a
+   high-contrast two-tone pattern, and type sitting directly on that is
+   unreadable at every size. */
+.spiral-cell__body {
+  display: block;
+  padding: 9px 11px 10px 11px;
+  background-color: rgba(0,0,0,.78);
+  border-top: 1px solid rgba(239,109,61,.14);
+}
+.spiral-cell:hover .spiral-cell__body,
+.spiral-cell:focus .spiral-cell__body {
+  background-color: rgba(0,0,0,.62);
+}
+.spiral-cell[data-density="title"] .spiral-cell__body,
+.spiral-cell[data-density="bare"] .spiral-cell__body {
+  padding: 6px 7px;
+  text-align: center;
+}
+
+/* Type scales with the cell. The density attribute is set by script.js from
+   the slot's area, which is also what decides how much content is written in. */
+.spiral-cell .note__title {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+.spiral-cell .note__meta {
+  margin: 4px 0 0 0;
+  font-size: 1.1rem;
+}
+.spiral-cell .note__snippet {
+  margin: 8px 0 0 0;
+  font-size: 1.3rem;
+  line-height: 1.45;
+}
+.spiral-cell[data-density="full"] .note__title { font-size: 2.4rem; }
+.spiral-cell[data-density="mid"]  .note__title { font-size: 1.7rem; }
+.spiral-cell[data-density="title"] .note__title { font-size: 1.2rem; }
+.spiral-cell__bare {
+  display: block;
+  font-size: 1rem;
+  letter-spacing: .03rem;
+  color: #9aa0ab;
+}
+
+/* Newest entry in view: the one occupying the largest slot. */
+.spiral-cell[data-slot="0"] {
+  border-color: rgba(239,109,61,.45);
+}
+
+/* Below the spiral, a conventional list. Hidden wherever the spiral is usable;
+   shown on narrow screens, where eight nested cells would be unreadable. */
+.spiral-fallback { display: none; }
+
+@media (max-width: 700px) {
+  .spiral-track { height: auto !important; }
+  .spiral-sticky { position: static; height: auto; }
+  .spiral-stage { display: none; }
+  .spiral-fallback { display: block; }
+}
+
+/* A grid that rearranges itself as the page scrolls is exactly the kind of
+   motion this setting exists to suppress. Fall back to the plain list. */
+@media (prefers-reduced-motion: reduce) {
+  .spiral-track { height: auto !important; }
+  .spiral-sticky { position: static; height: auto; }
+  .spiral-stage { display: none; }
+  .spiral-fallback { display: block; }
+}
+
 /* Preview card in list view. Whole card is a link so the target is easy to hit
    at a glance, and the accent border echoes the project cells. */
 .note-preview {

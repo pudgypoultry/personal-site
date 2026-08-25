@@ -1,8 +1,41 @@
 <!doctype html>
 <html>
   <head>
+    <!-- Path-routing receiver. Runs before anything else so the address bar
+         shows the final URL by the time the rest of the page renders.
+
+         Two paths converge on this block: (a) 404.html redirected here after
+         the server could not resolve a deep path like /thoughts/my-piece, and
+         (b) a bookmark using the old #hash routing scheme. In both cases we
+         rewrite the URL back to a clean path without touching history depth.
+    -->
+    <script>
+    (function () {
+      var q = window.location.search;
+      var m = q.match(/[?&]p=([^&]*)/);
+      if (m) {
+        var target = decodeURIComponent(m[1]);
+        var rest = q.replace(/([?&])p=[^&]*&?/, '$1').replace(/[?&]$/, '');
+        window.history.replaceState(null, '', target + rest + window.location.hash);
+        return;
+      }
+      // Legacy: rewrite bookmarked #region/slug into /region/slug. The old
+      // #about hash is remapped to /projects since that tab reads as Projects.
+      var h = window.location.hash;
+      if (h && h.length > 1) {
+        var legacy = h.slice(1).replace(/^about(\/|$)/, 'projects$1');
+        window.history.replaceState(null, '', '/' + legacy + window.location.search);
+      }
+    })();
+    </script>
+
     <!-- Page setup -->
     <meta charset="utf-8">
+    <!-- All relative URLs on the page resolve against the site root regardless
+         of what path the address bar happens to be showing. Without this, a
+         deep URL like /thoughts/my-piece makes the browser try to fetch
+         style.css from /thoughts/my-piece/style.css and everything 404s. -->
+    <base href="/">
     <title>Andrew Teske</title>
     <meta name="description" content="Andrew Teske — software engineer building games, simulations, and cellular automata. MS Computer Science (Oregon), MS Economics, BS Mathematics.">
     <meta name="author" content="Andrew Teske">
@@ -190,15 +223,15 @@
         <img src="logo.png" width="150" height="150" alt="">
         <div class="header__text">
           <h1>Andrew Teske</h1>
-          <p class="tagline">Software Dev. Games. Simulations. Systems. Optimization.</p>
+          <p class="tagline">Software Dev. Games. Simulations.</p>
         </div>
       </div>
 
       <!-- Menu link fragment #id should match a div id. Example: <a href="#home"> links to <div id="home"></div>  -->
       <ul class="main-menu">
-        <li><a href="#home">Howdy</a></li>
-        <li><a href="#about">Projects</a></li>
-        <li><a href="#thoughts">Thoughts</a></li>
+        <li><a href="/">Howdy</a></li>
+        <li><a href="/projects">Projects</a></li>
+        <li><a href="/thoughts">Thoughts</a></li>
       </ul>
     </header>
    
@@ -291,7 +324,7 @@
                 </a>
               </div>
 
-              <p class="more-link"><a href="#about">All projects &rarr;</a></p>
+              <p class="more-link"><a href="/projects">All projects &rarr;</a></p>
             </section>
 
             <section class="panel">

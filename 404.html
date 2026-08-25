@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Andrew Teske</title>
+  <!--
+    GitHub Pages does not offer server-side routing, but it does serve this file
+    for any path it cannot resolve. We use that as an SPA fallback: encode the
+    requested path into a query parameter, redirect to the site root, and let a
+    tiny receiver in index.html decode it and put the real URL back into the
+    address bar via history.replaceState.
+
+    Net effect: axiomata.software/thoughts/my-piece loads index.html with the
+    address bar reading /thoughts/my-piece, and the router picks it up as if
+    the server had served that path directly.
+  -->
+  <script>
+  (function () {
+    var target = window.location.pathname + window.location.search;
+    var encoded = encodeURIComponent(target);
+    window.location.replace('/?p=' + encoded + window.location.hash);
+  })();
+  </script>
+</head>
+<body></body>
+</html>

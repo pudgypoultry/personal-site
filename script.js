@@ -64,14 +64,27 @@
     $('.content-region').hide();
     $('.main-menu a').removeClass('active');
 
-    // Show the region specified in the URL hash and highlight its menu link
+    // Show the region and highlight its menu link. The nav uses path hrefs
+    // (see PATH_MAP below) while internally we identify regions by DOM id, so
+    // active-link matching goes through the map instead of comparing hrefs.
     $(region).show();
-    $('.main-menu a[href="'+ region +'"]').addClass('active');
+    var linkPath = pathForRegion(region);
+    if (linkPath) {
+      $('.main-menu a[href="' + linkPath + '"]').addClass('active');
+    }
 
     var $region = $(region);
     $region.removeClass('wipe-in');
     if ($region.length) { $region[0].offsetWidth; } // forced reflow: replays the animation
     $region.addClass('wipe-in');
+  }
+
+  // Reverse of PATH_MAP: which nav link path corresponds to a region selector.
+  function pathForRegion(region) {
+    for (var p in PATH_MAP) {
+      if (PATH_MAP[p] === region) { return p; }
+    }
+    return null;
   }
 
   function clamp(v, lo, hi) {
@@ -129,53 +142,82 @@
     }, SHEET_FRAMES * FRAME_MS + 30);
   }
 
-  // We use some Javascript and the URL #fragment to hide/show different parts of the page
-  // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#Linking_to_an_element_on_the_same_page
-  $(window).on('load hashchange', function (e) {
+  // Path-based routing. Every real page has its own URL (/, /projects,
+  // /thoughts, /thoughts/<slug>), served either directly at that URL when it
+  // maps to a real file OR via the SPA 404 fallback (see 404.html + the
+  // receiver in index.html <head>). This handler runs on initial load, on
+  // popstate (browser back/forward), and on internal link clicks intercepted
+  // below -- the three ways the URL can change without a full page load.
+  //
+  // Paths are translated to DOM region selectors via PATH_MAP. Kept explicit
+  // because path names ("projects") and internal region ids ("about") do not
+  // always agree.
+  var PATH_MAP = {
+    '/':         '#home',
+    '/projects': '#about',
+    '/thoughts': '#thoughts'
+  };
 
-    // The hash can carry a deep-link slug: #thoughts/my-piece activates the
-    // Thoughts tab AND scrolls to that entry. Regular #region hashes still work.
-    // Contact used to be its own tab and moved onto the landing page, so an old
-    // #contact bookmark would otherwise show an empty area -- anything that does
-    // not name a real region falls back to the first tab.
-    var first = $('.main-menu a:first').attr('href');
-    var raw = location.hash.toString();
-    var match = raw.match(/^#([A-Za-z][\w-]*)(?:\/([\w-]+))?$/);
-    var region = first;
-    var slug = null;
+  function parseLocation() {
+    var path = location.pathname.replace(/\/+$/, '') || '/';
 
-    if (match) {
-      var candidate = '#' + match[1];
-      if ($(candidate).hasClass('content-region')) {
-        region = candidate;
-        slug = match[2] || null;
-      }
+    // /thoughts/<slug> is the one path pattern that carries data.
+    var thoughtSlug = path.match(/^\/thoughts\/([\w-]+)$/);
+    if (thoughtSlug) {
+      return { region: '#thoughts', slug: thoughtSlug[1] };
     }
 
-    if (e.type === 'load') {
-      // Nothing to transition away from on first paint, so just show the region.
-      showRegion(region);
-    } else if (region !== currentRegion) {
+    var region = PATH_MAP[path];
+    if (region && $(region).hasClass('content-region')) {
+      return { region: region, slug: null };
+    }
+    // Unknown path -- fall back to home rather than dropping the user on a
+    // blank page (e.g. a stale /contact bookmark from before that tab moved).
+    return { region: '#home', slug: null };
+  }
+
+  function route(isInitial) {
+    var loc = parseLocation();
+
+    if (isInitial) {
+      showRegion(loc.region);
+    } else if (loc.region !== currentRegion) {
       // Real tab change: play the automaton wipe.
-      playWipe(region);
+      playWipe(loc.region);
     }
-    // If region === currentRegion this was in-tab navigation (e.g. picking an
-    // entry within Thoughts); no wipe, and the region is already visible so
-    // showRegion is a no-op.
-    currentRegion = region;
+    // Same region: no wipe, and showRegion would be a no-op. In-tab navigation
+    // (e.g. picking an entry within Thoughts) only needs the view update below.
+    currentRegion = loc.region;
 
-    // Tell the Thoughts loader which view to draw. Fires on every #thoughts
-    // hashchange, so list <-> single transitions and cold deep-links both work.
-    if (region === '#thoughts' && window.__setThoughtsView) {
-      window.__setThoughtsView(slug);
+    if (loc.region === '#thoughts' && window.__setThoughtsView) {
+      window.__setThoughtsView(loc.slug);
     }
+  }
 
-    // Alternate method: Use AJAX to load the contents of an external file into a div based on URL fragment
-    // This will extract the region name from URL hash, and then load [region].html into the main #content div
-    // var region = location.hash.toString() || '#first';
-    // $('#content').load(region.slice(1) + '.html')
+  // Intercept clicks on internal absolute links so navigation happens via
+  // pushState instead of a full page reload -- keeps the SPA alive and lets
+  // the wipe transition play. Modifier-key clicks (cmd/ctrl for new tab,
+  // shift for new window, middle-click) fall through to the browser.
+  $(document).on('click', 'a[href^="/"]', function (e) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) { return; }
+    var $a = $(this);
+    if ($a.attr('target') === '_blank' || $a.attr('download') != null) { return; }
 
+    var href = $a.attr('href');
+    if (!href || href.charAt(0) !== '/' || href.charAt(1) === '/') { return; }
+
+    e.preventDefault();
+    if (href !== location.pathname + location.search) {
+      window.history.pushState(null, '', href);
+    }
+    route(false);
   });
+
+  // Browser back/forward
+  $(window).on('popstate', function () { route(false); });
+
+  // Initial route runs once the router-adjacent functions are defined above.
+  $(window).on('load', function () { route(true); });
 
 })(jQuery);
 
@@ -557,23 +599,28 @@
 
 
 // ---- Thoughts loader -------------------------------------------------------
-// Entries live as individual HTML fragments in thoughts/, listed once in
-// thoughts/index.json. On page load this fetches the manifest, fetches every
+// Entries live as individual HTML fragments in entries/, listed once in
+// entries/index.json. On page load this fetches the manifest, fetches every
 // fragment in parallel, and keeps them all in memory. The URL then decides
 // which of two views is drawn into #thoughts .notes:
 //
-//   #thoughts             -> list view (a preview card per entry)
-//   #thoughts/<slug>      -> single view (that entry, full body, back link)
+//   /thoughts             -> spiral index (see below)
+//   /thoughts/<slug>      -> single view (that entry, full body, back link)
 //
-// The router in the main IIFE calls __setThoughtsView on every hashchange to
-// #thoughts, so both list<->single transitions and cold deep-links land in the
-// right place. No wipe fires for within-tab navigation between the two views.
+// The data folder is deliberately NOT called thoughts/: GitHub Pages resolves
+// /thoughts/my-piece to thoughts/my-piece.html when such a file exists, which
+// would serve the bare unstyled fragment instead of the site. Naming the folder
+// entries/ means no request path can ever collide with a real file, so every
+// deep URL falls through to 404.html and back into the app.
 //
-// Adding a new piece is: write thoughts/<slug>.html (body markup only, no
+// The router calls __setThoughtsView on every navigation to /thoughts, so both
+// index<->single transitions and cold deep-links land in the right place.
+//
+// Adding a new piece is: write entries/<slug>.html (body markup only, no
 // wrapper), then append one { title, date, file } object to index.json.
 (function () {
 
-  var MANIFEST = 'thoughts/index.json';
+  var MANIFEST = 'entries/index.json';
   var SNIPPET_CHARS = 200;
 
   var container = document.querySelector('#thoughts .notes');
@@ -641,35 +688,312 @@
            '</time></p>';
   }
 
+  // ---- Spiral index view ---------------------------------------------------
+  // The list of entries is laid out as a Fibonacci-style spiral of SLOT_COUNT
+  // cells. Slot 0 is the largest and holds the newest entry in view; each
+  // subsequent slot is smaller and spirals inward toward the oldest.
+  //
+  // Scrolling does not move the grid -- it is sticky. Instead, scroll position
+  // maps to a window offset over the entry list:
+  //
+  //   scroll DOWN -> the window slides toward older entries. Every visible
+  //                  entry moves one slot OUTWARD (bigger), the newest drops
+  //                  off the outside, an older one enters at the centre.
+  //   scroll UP   -> the reverse: entries spiral inward and newer ones enter
+  //                  at the largest slot.
+  //
+  // Each entry keeps its own DOM element for as long as it is on screen, and
+  // moving between slots is a CSS transition on the element's position/size.
+  // That is what produces the spiral motion rather than a re-render flicker.
+
+  var SLOT_COUNT = 8;
+  var STEP_PX = 320;    // scroll distance that advances the window by one entry
+
+  // Fraction of the remaining rectangle each cell takes. 0.5 matches the
+  // hand-drawn reference and is the only value that keeps all eight cells
+  // usable; 0.618 (golden ratio) is the mathematically true Fibonacci spiral
+  // but shrinks the innermost cell to roughly 40x13px, too small for text.
+  var SPLIT = 0.5;
+
+  // Default artwork. Entries have no images of their own, so each one borrows a
+  // patch of wipe-frames.png -- the pre-rendered automaton sheet that is already
+  // fetched and decoded for the tab transition, so this adds no new bytes. The
+  // patch is taken from the one frame where the board is fully covered (no
+  // transparent cells), and its offset is derived from the slug, so a given
+  // entry always shows the same piece of board. Same trick the tool cells on
+  // the Projects tab use for their missing thumbnails.
+  //
+  // An entry can override this by adding "image": "something.png" to its
+  // manifest object -- the default is only a default.
+  var SHEET_W    = 3200;    // the sheet at the 10x scale the transition uses
+  var SHEET_H    = 64000;
+  var COVER_TOP  = 32000;   // top of frame 16, the fully-covered one
+  var FRAME_H    = 2000;
+  var SAFE_W     = 820;     // largest cell we ever have to fill, plus margin
+  var SAFE_H     = 540;
+
+  // FNV-1a over the slug, so the choice of patch is stable and well spread.
+  function patchFor(slug) {
+    var h = 2166136261;
+    for (var i = 0; i < slug.length; i++) {
+      h ^= slug.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    var a = h >>> 0;
+    var b = Math.imul(a ^ (a >>> 13), 1274126177) >>> 0;
+    return {
+      x: a % (SHEET_W - SAFE_W),
+      y: COVER_TOP + (b % (FRAME_H - SAFE_H))
+    };
+  }
+
+  function setSheetPatch(el, key) {
+    var p = patchFor(key);
+    el.classList.add('spiral-cell--pattern');
+    el.style.backgroundImage = 'url(wipe-frames.png)';
+    el.style.backgroundSize = SHEET_W + 'px ' + SHEET_H + 'px';
+    el.style.backgroundPosition = '-' + p.x + 'px -' + p.y + 'px';
+  }
+
+  function applyBackdrop(el, entry) {
+    if (entry.image) {
+      el.classList.remove('spiral-cell--pattern');
+      el.style.backgroundImage = 'url(' + entry.image + ')';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      return;
+    }
+    setSheetPatch(el, entry.slug);
+  }
+
+  // Prefix for placeholder keys in the element map. The double underscore
+  // cannot appear at the start of a slug, which is derived from a filename,
+  // so placeholder keys and real slugs can never collide.
+  var PLACEHOLDER_KEY = '__ph-';
+
+  var slots = computeSlots(SLOT_COUNT, SPLIT);
+  var spiralEls = {};       // slug -> element, so entries can transition slots
+  var spiralStage = null;
+  var windowStart = 0;
+  var scrollBound = false;
+
+  // Lay out the spiral: each cell takes SPLIT of what is left, against a side
+  // that cycles top -> right -> bottom -> left. The final cell takes whatever
+  // remains. Values are percentages of the stage.
+  function computeSlots(count, ratio) {
+    var out = [];
+    var x = 0, y = 0, w = 100, h = 100;
+
+    for (var i = 0; i < count - 1; i++) {
+      var side = i % 4;
+      var cw, ch, cx, cy;
+
+      if (side === 0) {            // top
+        cw = w; ch = h * ratio; cx = x; cy = y;
+        y += ch; h -= ch;
+      } else if (side === 1) {     // right
+        cw = w * ratio; ch = h; cx = x + w - cw; cy = y;
+        w -= cw;
+      } else if (side === 2) {     // bottom
+        cw = w; ch = h * ratio; cx = x; cy = y + h - ch;
+        h -= ch;
+      } else {                     // left
+        cw = w * ratio; ch = h; cx = x; cy = y;
+        x += cw; w -= cw;
+      }
+      out.push({ x: cx, y: cy, w: cw, h: ch });
+    }
+    out.push({ x: x, y: y, w: w, h: h });
+    return out;
+  }
+
+  function maxWindowStart() {
+    return Math.max(0, entries.length - SLOT_COUNT);
+  }
+
+  // How much content a cell can carry depends on how big it is. Rather than
+  // overflow tiny cells, drop detail as they shrink.
+  function densityFor(slot) {
+    var area = slot.w * slot.h;
+    if (area >= 900) { return 'full'; }    // title + date + snippet
+    if (area >= 300) { return 'mid'; }     // title + date
+    if (area >= 60)  { return 'title'; }   // title only
+    return 'bare';                          // date only
+  }
+
+  // Text sits in its own element so it can carry a scrim: the artwork behind it
+  // is a busy two-tone pattern and unscrimmed type on top of it is unreadable.
+  function cellMarkup(entry, slot) {
+    var density = densityFor(slot);
+    var html = '';
+
+    if (density === 'bare') {
+      html = '<span class="spiral-cell__bare">' +
+               escape(formatDate(entry.date)) +
+             '</span>';
+    } else {
+      html += '<h3 class="note__title">' + escape(entry.title) + '</h3>';
+      if (density !== 'title') { html += meta(entry); }
+      if (density === 'full') {
+        html += '<p class="note__snippet">' + escape(snippetOf(entry.body)) + '</p>';
+      }
+    }
+
+    return '<span class="spiral-cell__body">' + html + '</span>';
+  }
+
+  function positionCell(el, slot) {
+    el.style.left   = slot.x + '%';
+    el.style.top    = slot.y + '%';
+    el.style.width  = slot.w + '%';
+    el.style.height = slot.h + '%';
+  }
+
+  // Draw the current window. Elements already on screen are repositioned (the
+  // CSS transition animates the move); ones scrolled past fade out and go.
+  function paintSpiral() {
+    if (!spiralStage) { return; }
+
+    var visible = entries.slice(windowStart, windowStart + SLOT_COUNT);
+    var seen = {};
+
+    visible.forEach(function (entry, i) {
+      var slot = slots[i];
+      var el = spiralEls[entry.slug];
+      seen[entry.slug] = true;
+
+      if (!el) {
+        el = document.createElement('a');
+        el.className = 'spiral-cell spiral-cell--entering';
+        el.href = '/thoughts/' + entry.slug;
+        positionCell(el, slot);
+        applyBackdrop(el, entry);
+        spiralStage.appendChild(el);
+        spiralEls[entry.slug] = el;
+
+        // Let the entering state paint before clearing it, so the fade runs.
+        el.offsetWidth;
+        el.classList.remove('spiral-cell--entering');
+      } else {
+        positionCell(el, slot);
+      }
+
+      el.setAttribute('data-slot', i);
+      el.setAttribute('data-density', densityFor(slot));
+      el.innerHTML = cellMarkup(entry, slot);
+    });
+
+    // Fewer entries than slots: fill the rest so the spiral still reads as a
+    // complete shape rather than a filled corner with a hole in it. These are
+    // inert -- not links, not focusable, hidden from assistive tech -- and just
+    // carry a dimmed patch of the same sheet the real cells use.
+    for (var i = visible.length; i < SLOT_COUNT; i++) {
+      var key = PLACEHOLDER_KEY + i;
+      seen[key] = true;
+
+      var ph = spiralEls[key];
+      if (!ph) {
+        ph = document.createElement('div');
+        ph.className = 'spiral-cell spiral-cell--placeholder';
+        ph.setAttribute('aria-hidden', 'true');
+        setSheetPatch(ph, 'placeholder-' + i);
+        positionCell(ph, slots[i]);
+        spiralStage.appendChild(ph);
+        spiralEls[key] = ph;
+      } else {
+        positionCell(ph, slots[i]);
+      }
+      ph.setAttribute('data-slot', i);
+    }
+
+    Object.keys(spiralEls).forEach(function (slug) {
+      if (seen[slug]) { return; }
+      var el = spiralEls[slug];
+      delete spiralEls[slug];
+      el.classList.add('spiral-cell--leaving');
+      setTimeout(function () {
+        if (el.parentNode) { el.parentNode.removeChild(el); }
+      }, 400);
+    });
+  }
+
+  // Map scroll position within the tall track onto a window offset.
+  function syncToScroll() {
+    var track = document.getElementById('spiral-track');
+    if (!track) { return; }
+
+    var top = track.getBoundingClientRect().top;
+    var travelled = Math.max(0, -top);
+    var next = Math.min(maxWindowStart(), Math.round(travelled / STEP_PX));
+
+    if (next !== windowStart) {
+      windowStart = next;
+      paintSpiral();
+    }
+  }
+
   function renderList() {
     container.classList.remove('notes--single');
     container.classList.add('notes--list');
     container.innerHTML = '';
+    spiralEls = {};
+    spiralStage = null;
 
     if (!entries.length) {
       container.innerHTML = '<p class="notes__empty">Nothing posted yet.</p>';
       return;
     }
 
-    var frag = document.createDocumentFragment();
+    // The track is tall enough to give every window position its own stretch of
+    // scroll, plus one viewport so the last state can be read before the grid
+    // releases. The stage inside is sticky, so the grid holds position while
+    // the page scrolls past it.
+    var track = document.createElement('div');
+    track.id = 'spiral-track';
+    track.className = 'spiral-track';
+    track.style.height = 'calc(100vh + ' + (maxWindowStart() * STEP_PX) + 'px)';
+
+    var sticky = document.createElement('div');
+    sticky.className = 'spiral-sticky';
+
+    spiralStage = document.createElement('div');
+    spiralStage.className = 'spiral-stage';
+
+    sticky.appendChild(spiralStage);
+    track.appendChild(sticky);
+    container.appendChild(track);
+
+    // A plain list underneath, for narrow screens (where an eight-cell spiral
+    // is unreadable) and for anything that does not run the layout.
+    var fallback = document.createElement('div');
+    fallback.className = 'spiral-fallback';
     entries.forEach(function (e) {
       var card = document.createElement('a');
       card.className = 'note-preview';
-      card.href = '#thoughts/' + e.slug;
+      card.href = '/thoughts/' + e.slug;
       card.innerHTML =
         '<h3 class="note__title">' + escape(e.title) + '</h3>' +
         meta(e) +
         '<p class="note__snippet">' + escape(snippetOf(e.body)) + '</p>';
-      frag.appendChild(card);
+      fallback.appendChild(card);
     });
-    container.appendChild(frag);
+    container.appendChild(fallback);
+
+    windowStart = 0;
+    paintSpiral();
+    syncToScroll();
+
+    if (!scrollBound) {
+      window.addEventListener('scroll', syncToScroll, { passive: true });
+      scrollBound = true;
+    }
   }
 
   function renderSingle(entry) {
     container.classList.remove('notes--list');
     container.classList.add('notes--single');
     container.innerHTML =
-      '<p class="notes__back"><a href="#thoughts">&larr; All thoughts</a></p>' +
+      '<p class="notes__back"><a href="/thoughts">&larr; All thoughts</a></p>' +
       '<article class="note note--full" id="thought-' + entry.slug + '">' +
         '<h3 class="note__title">' + escape(entry.title) + '</h3>' +
         meta(entry) +
@@ -695,7 +1019,7 @@
       });
 
     return Promise.all(sorted.map(function (x) {
-      return fetch('thoughts/' + x.e.file, { cache: 'no-cache' })
+      return fetch('entries/' + x.e.file, { cache: 'no-cache' })
         .then(function (r) { return r.ok ? r.text() : ''; })
         .catch(function () { return ''; });
     })).then(function (bodies) {
@@ -704,6 +1028,7 @@
           title: x.e.title || '',
           date: x.e.date || '',
           file: x.e.file,
+          image: x.e.image || null,   // optional; falls back to a sheet patch
           slug: slugOf(x.e.file),
           body: bodies[k] || ''
         };
