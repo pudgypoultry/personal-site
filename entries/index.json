@@ -1,9 +1,14 @@
 {
   "entries": [
     {
-      "title": "Promises and AI",
+      "title": "Promises/AI",
       "date": "2026-08-19",
       "file": "2026-08-19-Promises-and-AI.html"
+    },
+    {
+      "title": "Language/Friction",
+      "date": "2026-09-01",
+      "file": "2026-08-27-Language-and-Friction.html"
     }
   ]
 }

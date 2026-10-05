@@ -740,6 +740,13 @@
   var SLOT_COUNT = 8;
   var STEP_PX = 320;    // scroll distance that advances the window by one entry
 
+  // Slots held open at the outside of the spiral, ahead of the newest entry.
+  // With 1, the largest cell is a reserved "next" tile and the newest entry sits
+  // one place inward. Set to 0 to give the newest entry the largest cell again;
+  // set LEAD_LABEL to '' for a blank reserved tile.
+  var LEAD_PLACEHOLDERS = 1;
+  var LEAD_LABEL = 'Next entry';
+
   // Fraction of the remaining rectangle each cell takes. 0.5 matches the
   // hand-drawn reference and is the only value that keeps all eight cells
   // usable; 0.618 (golden ratio) is the mathematically true Fibonacci spiral
@@ -838,8 +845,13 @@
     return out;
   }
 
+  // How many entries the spiral can show at once, after the reserved lead slots.
+  function slotCapacity() {
+    return Math.max(1, SLOT_COUNT - LEAD_PLACEHOLDERS);
+  }
+
   function maxWindowStart() {
-    return Math.max(0, entries.length - SLOT_COUNT);
+    return Math.max(0, entries.length - slotCapacity());
   }
 
   // How much content a cell can carry depends on how big it is. Rather than
@@ -885,11 +897,14 @@
   function paintSpiral() {
     if (!spiralStage) { return; }
 
-    var visible = entries.slice(windowStart, windowStart + SLOT_COUNT);
+    // Real entries start after the reserved lead slots, so the newest entry sits
+    // one place inward from the outermost cell.
+    var visible = entries.slice(windowStart, windowStart + slotCapacity());
     var seen = {};
 
     visible.forEach(function (entry, i) {
-      var slot = slots[i];
+      var slotIndex = LEAD_PLACEHOLDERS + i;
+      var slot = slots[slotIndex];
       var el = spiralEls[entry.slug];
       seen[entry.slug] = true;
 
@@ -909,17 +924,24 @@
         positionCell(el, slot);
       }
 
-      el.setAttribute('data-slot', i);
+      el.setAttribute('data-slot', slotIndex);
       el.setAttribute('data-density', densityFor(slot));
       el.innerHTML = cellMarkup(entry, slot);
     });
 
-    // Fewer entries than slots: fill the rest so the spiral still reads as a
-    // complete shape rather than a filled corner with a hole in it. These are
-    // inert -- not links, not focusable, hidden from assistive tech -- and just
-    // carry a dimmed patch of the same sheet the real cells use.
-    for (var i = visible.length; i < SLOT_COUNT; i++) {
-      var key = PLACEHOLDER_KEY + i;
+    // Every slot not holding an entry gets a placeholder: the reserved lead
+    // slots at the outside, and any trailing slots when there are fewer entries
+    // than the spiral can hold. They are inert -- not links, not focusable,
+    // hidden from assistive tech -- and carry a dimmed patch of the same sheet
+    // the real cells use, so the spiral still reads as a complete shape.
+    var empty = [];
+    var i;
+    for (i = 0; i < LEAD_PLACEHOLDERS; i++) { empty.push(i); }
+    for (i = LEAD_PLACEHOLDERS + visible.length; i < SLOT_COUNT; i++) { empty.push(i); }
+
+    empty.forEach(function (slotIndex) {
+      var key = PLACEHOLDER_KEY + slotIndex;
+      var slot = slots[slotIndex];
       seen[key] = true;
 
       var ph = spiralEls[key];
@@ -927,15 +949,24 @@
         ph = document.createElement('div');
         ph.className = 'spiral-cell spiral-cell--placeholder';
         ph.setAttribute('aria-hidden', 'true');
-        setSheetPatch(ph, 'placeholder-' + i);
-        positionCell(ph, slots[i]);
+        setSheetPatch(ph, 'placeholder-' + slotIndex);
+        positionCell(ph, slot);
         spiralStage.appendChild(ph);
         spiralEls[key] = ph;
       } else {
-        positionCell(ph, slots[i]);
+        positionCell(ph, slot);
       }
-      ph.setAttribute('data-slot', i);
-    }
+
+      ph.setAttribute('data-slot', slotIndex);
+      ph.setAttribute('data-density', densityFor(slot));
+
+      // The reserved lead cell is the largest thing on the page. Left blank it
+      // reads as a rendering fault, so it says what it is.
+      ph.innerHTML = (slotIndex < LEAD_PLACEHOLDERS && LEAD_LABEL)
+        ? '<span class="spiral-cell__body"><h3 class="note__title">' +
+            escape(LEAD_LABEL) + '</h3></span>'
+        : '';
+    });
 
     Object.keys(spiralEls).forEach(function (slug) {
       if (seen[slug]) { return; }
